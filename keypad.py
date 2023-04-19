@@ -1,34 +1,130 @@
 import mraa
 import time
 
-row_pins = [37, 36, 38, 40]
-col_pins = [29, 31, 33, 35]
 
-for pin in row_pins:
-    mraa.Gpio(pin).dir(mraa.DIR_IN)
-for pin in col_pins:
-    mraa.Gpio(pin).dir(mraa.DIR_OUT)
+row1 = mraa.Gpio(29)
+row1.dir(mraa.DIR_OUT)
+row2 = mraa.Gpio(31)
+row2.dir(mraa.DIR_OUT)
+row3 = mraa.Gpio(33)
+row3.dir(mraa.DIR_OUT)
+row4 = mraa.Gpio(35)
+row4.dir(mraa.DIR_OUT)
 
-keypad = [
-    ['1', '4', '7', '*'],
-    ['2', '5', '8', '0'],
-    ['3', '6', '9', '#'],
-    ['A', 'B', 'C', 'D']
-]
+
+col1 = mraa.Gpio(37)
+col1.dir(mraa.DIR_IN)
+col2 = mraa.Gpio(36)
+col2.dir(mraa.DIR_IN)
+col3 = mraa.Gpio(38)
+col3.dir(mraa.DIR_IN)
+col4 = mraa.Gpio(40)
+col4.dir(mraa.DIR_IN)
 
 def read_keypad():
-        for i in range(len(col_pins)):
-            # Set the current column pin to high
-            mraa.Gpio(col_pins[i]).write(1)
-            for j in range(len(row_pins)):
-                # Read the current row pin
-                if mraa.Gpio(row_pins[j]).read() == 1:
-                    # Button pressed, print the corresponding key
-                    print("Button pressed: ", keypad[j][i])
-                    # Add a small delay to debounce the button
-                    time.sleep(0.2)
-            # Set the current column pin back to low
-            mraa.Gpio(col_pins[i]).write(0)
+    # row 1 
+    row1.write(0)
+    if col1.read() == 0:
+        print("Button pressed: 1")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)
+        # Set the current column pin back to low
+
+    if col2.read() == 0:
+        print("Button pressed: 2")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)
+        # Set the current column pin back to low
+
+    if col3.read() == 0:
+        print("Button pressed: 3")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)
+        
+    if col4.read() == 0:
+        print("Button pressed: A")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)   
+
+    row1.write(1)
+    
+    #row 2
+    row2.write(0)
+    if col1.read() == 0:
+        print("Button pressed: 4")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)
+        # Set the current column pin back to low
+
+    if col2.read() == 0:
+        print("Button pressed: 5")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)
+        # Set the current column pin back to low
+
+    if col3.read() == 0:
+        print("Button pressed: 6")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)
+        
+    if col4.read() == 0:
+        print("Button pressed: B")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)   
+
+    row2.write(1)
+    
+    #row 3
+    row3.write(0)
+    if col1.read() == 0:
+        print("Button pressed: 7")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)
+        # Set the current column pin back to low
+
+    if col2.read() == 0:
+        print("Button pressed: 8")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)
+        # Set the current column pin back to low
+
+    if col3.read() == 0:
+        print("Button pressed: 9")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)
+        
+    if col4.read() == 0:
+        print("Button pressed: C")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)   
+
+    row3.write(1)
+    
+    #row 4
+    row4.write(0)
+    if col1.read() == 0:
+        print("Button pressed: *")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)
+        # Set the current column pin back to low
+
+    if col2.read() == 0:
+        print("Button pressed: 0")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)
+        # Set the current column pin back to low
+
+    if col3.read() == 0:
+        print("Button pressed: #")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)
+        
+    if col4.read() == 0:
+        print("Button pressed: D")
+        # Add a small delay to debounce the button
+        time.sleep(0.6)   
+
+    row4.write(1)
 
 print("Begin...")
 
