@@ -2,6 +2,7 @@ import RPi.GPIO as GPIO
 import time
 import Adafruit_CharLCD as LCD
  
+ test = x
 # Initialize the LCD screen
 lcd_rs = 26
 lcd_en = 19
