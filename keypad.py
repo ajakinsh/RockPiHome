@@ -28,7 +28,6 @@ def read_keypad():
         print("Button pressed: 1")
         # Add a small delay to debounce the button
         time.sleep(0.6)
-        # Set the current column pin back to low
 
     if col2.read() == 0:
         print("Button pressed: 2")
