@@ -2,6 +2,10 @@ import tkinter as tk
 import cv2
 import serial
 import cv2
+import os
+
+cmd_add = 'ssh rock@10.144.113.116 "python add_face.py face.jpg"'
+cmd_delete = 'ssh rock@10.144.113.116 "python delete_face.py"'
 
 # Configure serial communication with Arduino Teensy
 ser = serial.Serial('/dev/ttyACM0', 9600)
@@ -64,14 +68,14 @@ def add_face():
 
     # Send command to Rock Pi to add face ID
     # Replace IP address with the IP address of your Rock Pi
-    os.system('ssh root@192.168.1.100 "python add_face.py face.jpg"')
-    os.system('inet 10.144.113.116 "python add_face.py face.jpg"')
+    #os.system('ssh root@192.168.1.100 "python add_face.py face.jpg"')
+    os.system(cmd_add)
 
 # Define function for deleting face ID
 def delete_face():
     # Send command to Rock Pi to delete face ID
     # Replace IP address with the IP address of your Rock Pi
-    os.system('ssh root@192.168.1.100 "python delete_face.py"')
+    os.system(cmd_delete)
 
 # Create Buttons for each functionality
 stream_button = tk.Button(root, text="Stream Video", command=stream_video)
