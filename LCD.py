@@ -25,8 +25,8 @@ lcd_d4.dir(mraa.DIR_OUT)
 lcd_d5.dir(mraa.DIR_OUT)
 lcd_d6.dir(mraa.DIR_OUT)
 lcd_d7.dir(mraa.DIR_OUT)
-cathode_pin.dir(mraa.DIR_OUT)
-anode_pin.dir(mraa.DIR_OUT)
+#cathode_pin.dir(mraa.DIR_OUT)
+#anode_pin.dir(mraa.DIR_OUT)
 
 lcd_columns = 16
 lcd_rows = 2
