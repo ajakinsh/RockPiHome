@@ -28,22 +28,17 @@ def read_keypad():
         print("Button pressed: 1")
         # Add a small delay to debounce the button
         time.sleep(0.6)
-        # Set the current column pin back to low
 
     if col2.read() == 0:
         print("Button pressed: 2")
-        # Add a small delay to debounce the button
         time.sleep(0.6)
-        # Set the current column pin back to low
 
     if col3.read() == 0:
         print("Button pressed: 3")
-        # Add a small delay to debounce the button
         time.sleep(0.6)
         
     if col4.read() == 0:
         print("Button pressed: A")
-        # Add a small delay to debounce the button
         time.sleep(0.6)   
 
     row1.write(1)
@@ -52,24 +47,18 @@ def read_keypad():
     row2.write(0)
     if col1.read() == 0:
         print("Button pressed: 4")
-        # Add a small delay to debounce the button
         time.sleep(0.6)
-        # Set the current column pin back to low
 
     if col2.read() == 0:
         print("Button pressed: 5")
-        # Add a small delay to debounce the button
         time.sleep(0.6)
-        # Set the current column pin back to low
 
     if col3.read() == 0:
         print("Button pressed: 6")
-        # Add a small delay to debounce the button
         time.sleep(0.6)
         
     if col4.read() == 0:
         print("Button pressed: B")
-        # Add a small delay to debounce the button
         time.sleep(0.6)   
 
     row2.write(1)
@@ -78,24 +67,18 @@ def read_keypad():
     row3.write(0)
     if col1.read() == 0:
         print("Button pressed: 7")
-        # Add a small delay to debounce the button
         time.sleep(0.6)
-        # Set the current column pin back to low
 
     if col2.read() == 0:
         print("Button pressed: 8")
-        # Add a small delay to debounce the button
         time.sleep(0.6)
-        # Set the current column pin back to low
 
     if col3.read() == 0:
         print("Button pressed: 9")
-        # Add a small delay to debounce the button
         time.sleep(0.6)
         
     if col4.read() == 0:
         print("Button pressed: C")
-        # Add a small delay to debounce the button
         time.sleep(0.6)   
 
     row3.write(1)
@@ -104,24 +87,18 @@ def read_keypad():
     row4.write(0)
     if col1.read() == 0:
         print("Button pressed: *")
-        # Add a small delay to debounce the button
         time.sleep(0.6)
-        # Set the current column pin back to low
 
     if col2.read() == 0:
         print("Button pressed: 0")
-        # Add a small delay to debounce the button
         time.sleep(0.6)
-        # Set the current column pin back to low
 
     if col3.read() == 0:
         print("Button pressed: #")
-        # Add a small delay to debounce the button
         time.sleep(0.6)
         
     if col4.read() == 0:
         print("Button pressed: D")
-        # Add a small delay to debounce the button
         time.sleep(0.6)   
 
     row4.write(1)
