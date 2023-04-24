@@ -1,68 +1,113 @@
-import RPi.GPIO as GPIO
+import mraa
 import time
-import Adafruit_CharLCD as LCD
- 
- test = x
-# Initialize the LCD screen
-lcd_rs = 26
-lcd_en = 19
-lcd_d4 = 13
-lcd_d5 = 6
-lcd_d6 = 5
-lcd_d7 = 11
-lcd_backlight = 4
+
+lcd_rs = mraa.Gpio(16)
+lcd_en = mraa.Gpio(18)
+lcd_d0 = mraa.Gpio(13)
+lcd_d1 = mraa.Gpio(15)
+lcd_d2 = mraa.Gpio(19)
+lcd_d3 = mraa.Gpio(21)
+lcd_d4 = mraa.Gpio(23)
+lcd_d5 = mraa.Gpio(22)
+lcd_d6 = mraa.Gpio(24)
+lcd_d7 = mraa.Gpio(32)
+#backlight = mraa.Gpio(15)
+
+# Set pin directions
+lcd_rs.dir(mraa.DIR_OUT)
+lcd_en.dir(mraa.DIR_OUT)
+lcd_d0.dir(mraa.DIR_OUT)
+lcd_d1.dir(mraa.DIR_OUT)
+lcd_d2.dir(mraa.DIR_OUT)
+lcd_d3.dir(mraa.DIR_OUT)
+lcd_d4.dir(mraa.DIR_OUT)
+lcd_d5.dir(mraa.DIR_OUT)
+lcd_d6.dir(mraa.DIR_OUT)
+lcd_d7.dir(mraa.DIR_OUT)
+#backlight.dir(mraa.DIR_OUT)
+
 lcd_columns = 16
 lcd_rows = 2
-lcd = LCD.Adafruit_CharLCD(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7, lcd_columns, lcd_rows, lcd_backlight)
- 
-# Set up the keypad
-MATRIX = [[1, 2, 3, "A"],
-          [4, 5, 6, "B"],
-          [7, 8, 9, "C"],
-          ["*", 0, "#", "D"]]
- 
-ROW = [4, 17, 27, 22]
-COL = [18, 23, 24, 25]
- 
-for j in range(4):
-    GPIO.setup(COL[j], GPIO.OUT)
-    GPIO.output(COL[j], 1)
- 
-for i in range(4):
-    GPIO.setup(ROW[i], GPIO.IN, pull_up_down=GPIO.PUD_UP)
- 
-# Define the saved string code
-saved_code = "1234"
- 
-# Define a function to get the character corresponding to the button pressed
-def get_key():
-    for j in range(4):
-        GPIO.output(COL[j], 0)
- 
-        for i in range(4):
-            if GPIO.input(ROW[i]) == 0:
-                return MATRIX[i][j]
- 
-        GPIO.output(COL[j], 1)
- 
-    return None
- 
-# Initialize the typed code variable
-typed_code = ""
- 
-# Continuously read the keypad and display the typed code on the LCD screen
+
+def lcd_init():
+    time.sleep(0.4)
+    lcd_send_command(0x30)
+    time.sleep(0.39)
+    lcd_send_command(0x38)
+    time.sleep(0.37)
+    lcd_send_command(0x10)
+    time.sleep(0.37)
+    lcd_send_command(0x0C)
+    time.sleep(0.153)
+    lcd_send_command(0x06)
+    time.sleep(0.4)
+    lcd_send_command(0x02)
+    time.sleep(0.4)
+    lcd_send_command(0x01)
+    time.sleep(0.4)
+
+    lcd_en.write(1)
+    lcd_rs.write(1)
+    lcd_d0.write(0)
+    lcd_d1.write(0)
+    lcd_d2.write(0)
+    lcd_d3.write(0)
+    lcd_d4.write(0)
+    lcd_d5.write(0)
+    lcd_d6.write(0)
+    lcd_d7.write(0)
+
+def lcd_toggle_enable():
+    time.sleep(0.0039)
+    lcd_en.write(1)
+    time.sleep(0.05)
+    lcd_en.write(0)
+    time.sleep(0.05)
+
+def lcd_send_eight_bits(data):
+    lcd_d0.write(data & 0x01)
+    lcd_d1.write((data >> 1) & 0x01)
+    lcd_d2.write((data >> 2) & 0x01)
+    lcd_d3.write((data >> 3) & 0x01)
+    lcd_d4.write((data >> 4) & 0x01)
+    lcd_d5.write((data >> 5) & 0x01)
+    lcd_d6.write((data >> 6) & 0x01)
+    lcd_d7.write((data >> 7) & 0x01)
+    lcd_toggle_enable()
+
+def lcd_send_command(command):
+    lcd_rs.write(0)
+    time.sleep(0.0039)
+    lcd_send_eight_bits(command)
+
+def lcd_send_character(char):
+    lcd_send_command(ord(char))
+
+def lcd_message(message):
+    lcd_rs.write(1)
+    for char in message:
+        lcd_send_character(char)                                                                                               
+        time.sleep(0.04)
+        
+lcd_init()
+print("Starting...")
+                                                                                                                                
 while True:
-    key = get_key()
-    if key:
-        typed_code += str(key)
-        lcd.clear()
-        lcd.message("Code: " + typed_code)
- 
-        if typed_code == saved_code:
-            lcd.set_cursor(0, 1)
-            lcd.message("UNLOCKED!")
-        else:
-            lcd.set_cursor(0, 1)
-            lcd.message("LOCKED")
- 
-        time.sleep(0.5)
+       
+    lcd_send_command(0x01) # Clear display
+    lcd_send_command(0x02) # Return home
+    lcd_send_command(0x0C) # Turn off cursor
+    lcd_send_command(0x06) # Set entry mode
+    lcd_message("locked")
+    time.sleep(1)
+
+    # Clear the LCD and write a different message
+    # Write a message to the LCD
+    lcd_send_command(0x01) # Clear display
+    lcd_send_command(0x02) # Return home
+    lcd_send_command(0x0C) # Turn off cursor
+    lcd_send_command(0x06) # Set entry mode
+    lcd_message("unlocked")
+    time.sleep(1)
+
+
