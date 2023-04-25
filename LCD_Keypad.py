@@ -121,18 +121,22 @@ def read_keypad():
         print("Button pressed: 1")
         # Add a small delay to debounce the button
         time.sleep(0.6)
+        return('1')
 
     if col2.read() == 0:
         print("Button pressed: 2")
         time.sleep(0.6)
+        return('2')
 
     if col3.read() == 0:
         print("Button pressed: 3")
         time.sleep(0.6)
-        
+        return('3')
+    
     if col4.read() == 0:
         print("Button pressed: A")
-        time.sleep(0.6)   
+        time.sleep(0.6)
+        return('A')
 
     row1.write(1)
     
@@ -141,18 +145,22 @@ def read_keypad():
     if col1.read() == 0:
         print("Button pressed: 4")
         time.sleep(0.6)
+        return('4')
 
     if col2.read() == 0:
         print("Button pressed: 5")
         time.sleep(0.6)
+        return('5')
 
     if col3.read() == 0:
         print("Button pressed: 6")
         time.sleep(0.6)
+        return('6')
         
     if col4.read() == 0:
         print("Button pressed: B")
-        time.sleep(0.6)   
+        time.sleep(0.6)
+        return('B')
 
     row2.write(1)
     
@@ -161,18 +169,22 @@ def read_keypad():
     if col1.read() == 0:
         print("Button pressed: 7")
         time.sleep(0.6)
+        return('7')
 
     if col2.read() == 0:
         print("Button pressed: 8")
         time.sleep(0.6)
+        return('8')
 
     if col3.read() == 0:
         print("Button pressed: 9")
         time.sleep(0.6)
+        return('9')
         
     if col4.read() == 0:
         print("Button pressed: C")
-        time.sleep(0.6)   
+        time.sleep(0.6)
+        return('C')
 
     row3.write(1)
     
@@ -181,20 +193,25 @@ def read_keypad():
     if col1.read() == 0:
         print("Button pressed: *")
         time.sleep(0.6)
+        return('*')
 
     if col2.read() == 0:
         print("Button pressed: 0")
         time.sleep(0.6)
+        return('0')
 
     if col3.read() == 0:
         print("Button pressed: #")
         time.sleep(0.6)
+        return('#')
         
     if col4.read() == 0:
         print("Button pressed: D")
-        time.sleep(0.6)   
+        time.sleep(0.6)
+        return('D')
 
     row4.write(1)
+    
 
 # Saved Door Lock Code 
 saved_code = "5678"
@@ -203,117 +220,56 @@ saved_code = "5678"
 typed_code = ""
 
 lcd_init()
-print(" LCD Starting...")
+print("LCD Starting...")
 time.sleep(1)
 print("Begin test...")
 
 
 while True:
-
+    
+#    # Read From Keypad
+#    key = read_keypad()
+#    lcd_message("Code: ")
+#    # If a key is presses
+#    for x in range(4):
+#        if key and ((len(typed_code))<4):
+#            typed_code += str(key)
+#            #lcd_send_command(0x01) # Clear display
+#            lcd_message(str(key)) # Print nb on LCD
+#    print(typed_code)
+#    print("here")
+    
+        
     # Read From Keypad
     key = read_keypad()
-
-    # If a key is presses
     if key:
         typed_code += str(key)
-        lcd_send_command(0x01) # Clear display
-        lcd_send_command(0x02) # Return home
-        lcd_send_command(0x0C) # Turn off cursor
-        lcd_send_command(0x06) # Set entry mode
-        lcd_message("Code: " + typed_code) # Print code on LCD
+        lcd_message(key)
 
-        # Check Code
+    if len(typed_code) == 4:
         if typed_code == saved_code:
             lcd_send_command(0x02) # Return home
             lcd_send_command(0x0C) # Turn off cursor
             lcd_send_command(0x06) # Set entry mode
             lcd_message("UNLOCKED!")
-            time.sleep(1)
-        else:
+            print("Correct code")
+
+            typed_code = ""
+            time.sleep(0.5)
             lcd_send_command(0x01) # Clear display
             lcd_send_command(0x02) # Return home
             lcd_send_command(0x0C) # Turn off cursor
             lcd_send_command(0x06) # Set entry mode
-            lcd_message("LOCKED. Please try again.")
-            time.sleep(1)
-
-
-
-# # Define GPIO pin connections for the LCD
-# RS = 16
-# EN = 18
-# D0 = 13
-# D1 = 15
-# D2 = 19
-# D3 = 21
-# D4 = 23
-# D5 = 22
-# D6 = 24
-# D7 = 26
-
-# # Define LCD constants
-# LCD_WIDTH = 16 # Maximum characters per line
-# LCD_CHR = mraa.Gpio(RS) # RS pin of the LCD
-# LCD_CMD = mraa.Gpio(EN) # EN pin of the LCD
-# LCD_LINES = 2 # Number of lines on the LCD
-# LCD_DISP = mraa.Lcd(LCD_CHR, LCD_CMD, D0, D1, D2, D3, D4, D5, D6, D7, LCD_LINES, LCD_WIDTH)
-
-# # Define the keypad matrix
-# keys = [
-#     ['1', '2', '3', 'A'],
-#     ['4', '5', '6', 'B'],
-#     ['7', '8', '9', 'C'],
-#     ['*', '0', '#', 'D']
-# ]
-
-# # Define the code to unlock the system
-# unlock_code = '1234'
-
-# # Initialize the LCD
-# LCD_DISP.begin(LCD_WIDTH, LCD_LINES)
-# LCD_DISP.clear()
-
-# # Define function to print the typed code on the LCD
-# def print_code(code):
-#     LCD_DISP.clear()
-#     LCD_DISP.setCursor(0, 0)
-#     LCD_DISP.write('CODE: ' + code)
-
-# # Define function to check if typed code matches unlock code and print message on LCD
-# def check_code(code):
-#     if code == unlock_code:
-#         LCD_DISP.clear()
-#         LCD_DISP.setCursor(0, 0)
-#         LCD_DISP.write('UNLOCKED!')
-#         time.sleep(2)
-#         LCD_DISP.clear()
-#         print_code('')
-#     else:
-#         LCD_DISP.clear()
-#         LCD_DISP.setCursor(0, 0)
-#         LCD_DISP.write('LOCKED')
-#         time.sleep(2)
-#         LCD_DISP.clear()
-#         print_code('')
-
-# # Define function to read the keypad and update the typed code on the LCD
-# def read_keypad():
-#     code = ''
-#     while True:
-#         for i in range(5):
-#             mraa.Gpio(i+4).dir(mraa.DIR_OUT)
-#             mraa.Gpio(i+4).write(1)
-#             for j in range(4):
-#                 mraa.Gpio(j).dir(mraa.DIR_IN)
-#                 if mraa.Gpio(j).read() == 0:
-#                     code += keys[i][j]
-#                     print_code(code)
-#                     time.sleep(0.3)
-#             mraa.Gpio(j).dir(mraa.DIR_OUT)
-#             mraa.Gpio(j).write(1)
-#         if len(code) == len(unlock_code):
-#             check_code(code)
-#             code = ''
-
-# # Call the read_keypad function to start the program
-# read_keypad()
+    
+        else:
+            lcd_send_command(0x02) # Return home
+            lcd_send_command(0x0C) # Turn off cursor
+            lcd_send_command(0x06) # Set entry mode
+            lcd_message("INCORRECT!")
+            print("Incorrect code")
+            typed_code = ""
+            time.sleep(0.5)
+            lcd_send_command(0x01) # Clear display
+            lcd_send_command(0x02) # Return home
+            lcd_send_command(0x0C) # Turn off cursor
+            lcd_send_command(0x06) # Set entry mode
