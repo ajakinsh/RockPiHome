@@ -217,6 +217,9 @@ while True:
     if key:
         typed_code += str(key)
         lcd_send_command(0x01) # Clear display
+        lcd_send_command(0x02) # Return home
+        lcd_send_command(0x0C) # Turn off cursor
+        lcd_send_command(0x06) # Set entry mode
         lcd_message("Code: " + typed_code) # Print code on LCD
 
         # Check Code
