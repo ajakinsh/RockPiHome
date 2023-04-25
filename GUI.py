@@ -1,6 +1,6 @@
 import tkinter as tk
 import cv2
-import serial
+import serial as ser
 import cv2
 import os
 
@@ -8,7 +8,7 @@ cmd_add = 'ssh rock@10.144.113.116 "python add_face.py face.jpg"'
 cmd_delete = 'ssh rock@10.144.113.116 "python delete_face.py"'
 
 # Configure serial communication with Arduino Teensy
-ser = serial.Serial('/dev/ttyACM0', 9600)
+#ser = serial.Serial('/dev/ttyACM0', 9600)
 
 # Open video capture device
 cap = cv2.VideoCapture(0)
