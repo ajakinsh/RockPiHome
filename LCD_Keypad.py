@@ -32,7 +32,7 @@ lcd_d7.dir(mraa.DIR_OUT)
 lcd_columns = 16
 lcd_rows = 2
 
-# Define Keypad rows 
+# Define Keypad rows
 row1 = mraa.Gpio(29)
 row1.dir(mraa.DIR_OUT)
 row2 = mraa.Gpio(31)
@@ -42,7 +42,7 @@ row3.dir(mraa.DIR_OUT)
 row4 = mraa.Gpio(35)
 row4.dir(mraa.DIR_OUT)
 
-# Define Keypad columns 
+# Define Keypad columns
 col1 = mraa.Gpio(37)
 col1.dir(mraa.DIR_IN)
 col2 = mraa.Gpio(36)
@@ -115,7 +115,7 @@ def lcd_message(message):
 
 # Keypad Read
 def read_keypad():
-    # row 1 
+    # row 1
     row1.write(0)
     if col1.read() == 0:
         print("Button pressed: 1")
@@ -132,14 +132,14 @@ def read_keypad():
         print("Button pressed: 3")
         time.sleep(0.6)
         return('3')
-    
+
     if col4.read() == 0:
         print("Button pressed: A")
         time.sleep(0.6)
         return('A')
 
     row1.write(1)
-    
+
     #row 2
     row2.write(0)
     if col1.read() == 0:
@@ -156,14 +156,14 @@ def read_keypad():
         print("Button pressed: 6")
         time.sleep(0.6)
         return('6')
-        
+
     if col4.read() == 0:
         print("Button pressed: B")
         time.sleep(0.6)
         return('B')
 
     row2.write(1)
-    
+
     #row 3
     row3.write(0)
     if col1.read() == 0:
@@ -180,14 +180,14 @@ def read_keypad():
         print("Button pressed: 9")
         time.sleep(0.6)
         return('9')
-        
+
     if col4.read() == 0:
         print("Button pressed: C")
         time.sleep(0.6)
         return('C')
 
     row3.write(1)
-    
+
     #row 4
     row4.write(0)
     if col1.read() == 0:
@@ -204,16 +204,16 @@ def read_keypad():
         print("Button pressed: #")
         time.sleep(0.6)
         return('#')
-        
+
     if col4.read() == 0:
         print("Button pressed: D")
         time.sleep(0.6)
         return('D')
 
     row4.write(1)
-    
 
-# Saved Door Lock Code 
+
+# Saved Door Lock Code
 saved_code = "5678"
 
 # Initialize the typed code variable
@@ -226,20 +226,6 @@ print("Begin test...")
 
 
 while True:
-    
-#    # Read From Keypad
-#    key = read_keypad()
-#    lcd_message("Code: ")
-#    # If a key is presses
-#    for x in range(4):
-#        if key and ((len(typed_code))<4):
-#            typed_code += str(key)
-#            #lcd_send_command(0x01) # Clear display
-#            lcd_message(str(key)) # Print nb on LCD
-#    print(typed_code)
-#    print("here")
-    
-        
     # Read From Keypad
     key = read_keypad()
     if key:
@@ -260,7 +246,7 @@ while True:
             lcd_send_command(0x02) # Return home
             lcd_send_command(0x0C) # Turn off cursor
             lcd_send_command(0x06) # Set entry mode
-    
+
         else:
             lcd_send_command(0x02) # Return home
             lcd_send_command(0x0C) # Turn off cursor
