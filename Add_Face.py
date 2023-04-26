@@ -2,7 +2,7 @@ import face_recognition
 import cv2
 
 # Open a connection to the default camera
-video_capture = cv2.VideoCapture(0)
+video_capture = cv2.VideoCapture(5)
 
 # Wait for the camera to warm up
 while True:
@@ -31,4 +31,4 @@ for top, right, bottom, left in face_locations:
     cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
 
 # Save the image as a JPEG file
-cv2.imwrite('image.jpg', frame)
+cv2.imwrite('jess.jpg', frame)
