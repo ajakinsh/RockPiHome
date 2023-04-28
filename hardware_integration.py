@@ -6,7 +6,7 @@ import serial
 # Define the possible serial port names
 port1 = '/dev/ttyACM0'
 port2 = '/dev/ttyACM1'
-baudrate = 57600
+baudrate = 115200
 
 try:
     ser = serial.Serial(port1, baudrate)
@@ -261,7 +261,7 @@ while True:
     lcd_message("LOCKED        ")
 
     # Wait for one second before updating the display again
-    time.sleep(1)
+    # time.sleep(1)
 
 
     # read from serial port
@@ -269,10 +269,12 @@ while True:
     print("(Serial)\t", ser_data)
 
     # check if it's time to send the command
-    current_time = time.time()
-    if current_time - last_command_time >= 1:  # send command every second
-        ser.write("C\n".encode())
-        last_command_time = current_time
+    # current_time = time.time()
+    # if current_time - last_command_time >= 1:  # send command every second
+    #     ser.write("C\n".encode())
+    #     last_command_time = current_time
+    ser.write("C\n".encode())
+
 
     # Check if message indicates a fingerprint match; update LCD
     if "Found ID #" in ser_data:
