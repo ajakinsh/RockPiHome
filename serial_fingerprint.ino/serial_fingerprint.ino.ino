@@ -14,13 +14,13 @@ SoftwareSerial mySerial(2, 3);
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(57600);
   while (!Serial);
 
   // Start the software serial port
-  mySerial.begin(115200);
+  mySerial.begin(57600);
 
-  finger.begin(115200);
+  finger.begin(57600);
   delay(5);
 
   // Verify the password with the fingerprint sensor
