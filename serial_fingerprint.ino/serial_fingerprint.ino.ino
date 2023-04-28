@@ -18,9 +18,9 @@ void setup() {
   while (!Serial);
 
   // Start the software serial port
-  mySerial.begin(57600);
+  mySerial.begin(115200);
 
-  finger.begin(57600);
+  finger.begin(115200);
   delay(5);
 
   // Verify the password with the fingerprint sensor
