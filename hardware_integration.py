@@ -258,7 +258,7 @@ while True:
 
     # Write a message to the bottom line of the LCD
     lcd_send_command(LCD_LINE_2)
-    lcd_message("LOCKED       ")
+    lcd_message("LOCKED        ")
 
     # Wait for one second before updating the display again
     time.sleep(1)
@@ -266,11 +266,11 @@ while True:
 
     # read from serial port
     ser_data = ser.readline().decode().rstrip()
-    print("(Serial)\t:", ser_data)
+    print("(Serial)\t", ser_data)
 
     # check if it's time to send the command
     current_time = time.time()
-    if current_time - last_command_time >= 5:  # send command every 5 seconds
+    if current_time - last_command_time >= 1:  # send command every second
         ser.write("C\n".encode())
         last_command_time = current_time
 
@@ -282,9 +282,10 @@ while True:
 
         # Write a message to the bottom line of the LCD
         lcd_send_command(LCD_LINE_2)
-        lcd_message("UNLOCKED!")
+        lcd_message("UNLOCKED!           ")
         time.sleep(1)
-        lcd_message("Hello user") # change to user's actual name later
+        lcd_send_command(LCD_LINE_2)
+        lcd_message("Hello user       ") # change to user's actual name later
         time.sleep(5)
         # turn on a green LED; red LED off
 
@@ -305,6 +306,7 @@ while True:
             # lcd_send_command(LCD_TURN_OFF_CURSOR)
             # lcd_send_command(LCD_SET_ENTRY_MODE)
             # lcd_send_command(LCD_LINE_2)
+            lcd_send_command(LCD_LINE_2)
             lcd_message("UNLOCKED!")
             print("Correct code")
 
@@ -319,6 +321,7 @@ while True:
             # lcd_send_command(LCD_RETURN_HOME)
             # lcd_send_command(LCD_TURN_OFF_CURSOR)
             # lcd_send_command(LCD_SET_ENTRY_MODE)
+            lcd_send_command(LCD_LINE_2)
             lcd_message("INCORRECT!")
             print("Incorrect code")
             typed_code = ""
