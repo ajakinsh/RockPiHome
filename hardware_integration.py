@@ -1,5 +1,30 @@
 import mraa
 import time
+import serial
+
+# Define the possible serial port names
+port1 = '/dev/ttyACM0'
+port2 = '/dev/ttyACM1'
+baudrate = 9600
+
+try:
+    ser = serial.Serial(port1, baudrate)
+    print("Connected to", port1)
+except:
+    try:
+        ser = serial.Serial(port2, baudrate)
+        print("Connected to", port2)
+    except:
+        # If both ports fail, print an error message and exit
+        print("Error: Could not connect to serial port")
+        exit()
+
+    # ser.reset_input_buffer()
+    # data = serial_com.readline().decode('utf-8').rstrip().split('e')
+    # if(data[0].startswith("V")):
+    #     Vol.set(float(data[0][1:]))
+    #     print("Voltage: " + str(Vol.get()))
+# serial_com.write("m1\n".encode())
 
 LCD_CLEAR_DISPLAY = 0x01
 LCD_RETURN_HOME = 0x02
@@ -264,3 +289,8 @@ while True:
             lcd_send_command(LCD_RETURN_HOME)
             lcd_send_command(LCD_TURN_OFF_CURSOR)
             lcd_send_command(LCD_SET_ENTRY_MODE)
+
+
+######### AFTER WHILE LOOP #######
+ser.close()
+exit()
