@@ -14,7 +14,7 @@ SoftwareSerial mySerial(2, 3);
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(57600);
   while (!Serial);
 
   // Start the software serial port

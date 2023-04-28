@@ -6,7 +6,7 @@ import serial
 # Define the possible serial port names
 port1 = '/dev/ttyACM0'
 port2 = '/dev/ttyACM1'
-baudrate = 9600
+baudrate = 57600
 
 try:
     ser = serial.Serial(port1, baudrate)
