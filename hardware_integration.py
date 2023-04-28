@@ -1,5 +1,6 @@
 import mraa
 import time
+from datetime import datetime
 import serial
 
 # Define the possible serial port names
@@ -19,17 +20,11 @@ except:
         print("Error: Could not connect to serial port")
         exit()
 
-    # ser.reset_input_buffer()
-    # data = serial_com.readline().decode('utf-8').rstrip().split('e')
-    # if(data[0].startswith("V")):
-    #     Vol.set(float(data[0][1:]))
-    #     print("Voltage: " + str(Vol.get()))
-# serial_com.write("m1\n".encode())
-
 LCD_CLEAR_DISPLAY = 0x01
 LCD_RETURN_HOME = 0x02
 LCD_TURN_OFF_CURSOR = 0x0C
 LCD_SET_ENTRY_MODE = 0x06
+LCD_LINE_2 = 0xC2
 
 #Define LCD pins
 lcd_rs = mraa.Gpio(16)
@@ -91,25 +86,18 @@ def lcd_init():
     time.sleep(0.37)
     lcd_send_command(0x10)
     time.sleep(0.37)
-    lcd_send_command(0x0C)
+    lcd_send_command(LCD_TURN_OFF_CURSOR)
     time.sleep(0.153)
-    lcd_send_command(0x06)
+    lcd_send_command(LCD_SET_ENTRY_MODE)
     time.sleep(0.4)
-    lcd_send_command(0x02)
+    lcd_send_command(LCD_RETURN_HOME)
     time.sleep(0.4)
-    lcd_send_command(0x01)
+    lcd_send_command(LCD_CLEAR_DISPLAY)
     time.sleep(0.4)
 
-    lcd_en.write(1)
-    lcd_rs.write(1)
-    lcd_d0.write(0)
-    lcd_d1.write(0)
-    lcd_d2.write(0)
-    lcd_d3.write(0)
-    lcd_d4.write(0)
-    lcd_d5.write(0)
-    lcd_d6.write(0)
-    lcd_d7.write(0)
+    lcd_en.write(1); lcd_rs.write(1);
+    lcd_d0.write(0); lcd_d1.write(0); lcd_d2.write(0); lcd_d3.write(0);
+    lcd_d4.write(0); lcd_d5.write(0); lcd_d6.write(0); lcd_d7.write(0);
 
 def lcd_toggle_enable():
     lcd_en.write(1)
@@ -141,7 +129,6 @@ def lcd_send_character(char):
 def lcd_message(message):
     for char in message:
         lcd_send_character(char)
-
 
 # Keypad Read
 def read_keypad():
@@ -254,43 +241,94 @@ print("LCD Starting...")
 time.sleep(1)
 print("Begin test...")
 
+# set initial time
+last_command_time = time.time()
+
+# turn red LED on; green LED off
 
 while True:
+    # Get the current time and format it as a string
+    current_time = datetime.now().strftime('%H:%M:%S')
+
+    # Write the current time to the top line of the LCD
+    lcd_send_command(LCD_RETURN_HOME)
+    lcd_send_command(LCD_TURN_OFF_CURSOR)
+    lcd_send_command(LCD_SET_ENTRY_MODE)
+    lcd_message(current_time + "    ")
+
+    # Write a message to the bottom line of the LCD
+    lcd_send_command(LCD_LINE_2)
+    lcd_message("LOCKED       ")
+
+    # Wait for one second before updating the display again
+    time.sleep(1)
+
+
+    # read from serial port
+    ser_data = ser.readline().decode().rstrip()
+    print("(Serial)\t:", ser_data)
+
+    # check if it's time to send the command
+    current_time = time.time()
+    if current_time - last_command_time >= 5:  # send command every 5 seconds
+        ser.write("C\n".encode())
+        last_command_time = current_time
+
+    # Check if message indicates a fingerprint match; update LCD
+    if "Found ID #" in ser_data:
+        lcd_send_command(LCD_RETURN_HOME)
+        lcd_send_command(LCD_TURN_OFF_CURSOR)
+        lcd_send_command(LCD_SET_ENTRY_MODE)
+
+        # Write a message to the bottom line of the LCD
+        lcd_send_command(LCD_LINE_2)
+        lcd_message("UNLOCKED!")
+        time.sleep(1)
+        lcd_message("Hello user") # change to user's actual name later
+        time.sleep(5)
+        # turn on a green LED; red LED off
+
+
     # Read From Keypad
     key = read_keypad()
     if key:
         typed_code += str(key)
-        lcd_message(key)
+        lcd_send_command(LCD_LINE_2)
+        lcd_message(key + "          ")
 
     if len(typed_code) == 4:
+        lcd_send_command(LCD_TURN_OFF_CURSOR)
+        lcd_send_command(LCD_SET_ENTRY_MODE)
+        lcd_send_command(LCD_LINE_2)
         if typed_code == saved_code:
-            lcd_send_command(LCD_RETURN_HOME)
-            lcd_send_command(LCD_TURN_OFF_CURSOR)
-            lcd_send_command(LCD_SET_ENTRY_MODE)
+            # lcd_send_command(LCD_RETURN_HOME)
+            # lcd_send_command(LCD_TURN_OFF_CURSOR)
+            # lcd_send_command(LCD_SET_ENTRY_MODE)
+            # lcd_send_command(LCD_LINE_2)
             lcd_message("UNLOCKED!")
             print("Correct code")
 
             typed_code = ""
-            time.sleep(0.5)
-            lcd_send_command(LCD_CLEAR_DISPLAY)
-            lcd_send_command(LCD_RETURN_HOME)
-            lcd_send_command(LCD_TURN_OFF_CURSOR)
-            lcd_send_command(LCD_SET_ENTRY_MODE)
+            time.sleep(3)
+            # lcd_send_command(LCD_CLEAR_DISPLAY)
+            # lcd_send_command(LCD_RETURN_HOME)
+            # lcd_send_command(LCD_TURN_OFF_CURSOR)
+            # lcd_send_command(LCD_SET_ENTRY_MODE)
 
         else:
-            lcd_send_command(LCD_RETURN_HOME)
-            lcd_send_command(LCD_TURN_OFF_CURSOR)
-            lcd_send_command(LCD_SET_ENTRY_MODE)
+            # lcd_send_command(LCD_RETURN_HOME)
+            # lcd_send_command(LCD_TURN_OFF_CURSOR)
+            # lcd_send_command(LCD_SET_ENTRY_MODE)
             lcd_message("INCORRECT!")
             print("Incorrect code")
             typed_code = ""
-            time.sleep(0.5)
-            lcd_send_command(LCD_CLEAR_DISPLAY)
-            lcd_send_command(LCD_RETURN_HOME)
-            lcd_send_command(LCD_TURN_OFF_CURSOR)
-            lcd_send_command(LCD_SET_ENTRY_MODE)
-
+            time.sleep(1)
+            # lcd_send_command(LCD_CLEAR_DISPLAY)
+            # lcd_send_command(LCD_RETURN_HOME)
+            # lcd_send_command(LCD_TURN_OFF_CURSOR)
+            # lcd_send_command(LCD_SET_ENTRY_MODE)
 
 ######### AFTER WHILE LOOP #######
+ser.reset_input_buffer()
 ser.close()
 exit()
