@@ -10,6 +10,7 @@ port2 = '/dev/ttyACM1'
 baudrate = 57600
 
 GLOBAL_SER = None
+GLOBAL_KEY = None
 
 # set initial time
 last_command_time = datetime.now()
@@ -242,6 +243,8 @@ def read_keypad():
     row4.write(1)
 
 def read_serial_thread_func():
+    global last_command_time
+
     while True:
         try: #large try-except block used for closing things properly after a keyboard interrupt
             if ser.in_waiting > 0:
@@ -264,7 +267,10 @@ def read_serial_thread_func():
             break
     return
 
-def hardware_thread_func():
+def LCD_thread_func():
+    global saved_code
+    global GLOBAL_SER
+    global GLOBAL_KEY
     while True:
         try:
             # Get the current time and format it as a string
@@ -290,36 +296,49 @@ def hardware_thread_func():
                 # Write a message to the bottom line of the LCD
                 lcd_send_command(LCD_LINE_2)
                 lcd_message("UNLOCKED!           ")
+                
+                # turn on a green LED; red LED off
+                
                 time.sleep(1)
                 lcd_send_command(LCD_LINE_2)
                 lcd_message("Hello user       ") # change to user's actual name later
-                time.sleep(5)
-
-                # turn on a green LED; red LED off
+              
+                time.sleep(2)
+                GLOBAL_SER = "finger lock"           
 
 
             # Read From Keypad
+            global typed_code
             key = read_keypad()
             if key:
+                lcd_send_command(LCD_RETURN_HOME)
+                lcd_send_command(LCD_TURN_OFF_CURSOR)
+                lcd_send_command(LCD_SET_ENTRY_MODE)
                 typed_code += str(key)
                 lcd_send_command(LCD_LINE_2)
-                lcd_message(key + "          ")
+#                lcd_message(key + "          ")
+                lcd_message(key)
+                
+                
+
 
             if len(typed_code) == 4:
                 lcd_send_command(LCD_TURN_OFF_CURSOR)
                 lcd_send_command(LCD_SET_ENTRY_MODE)
-                lcd_send_command(LCD_LINE_2)
+#                lcd_send_command(LCD_LINE_2)
                 if typed_code == saved_code:
                     # lcd_send_command(LCD_RETURN_HOME)
                     # lcd_send_command(LCD_TURN_OFF_CURSOR)
                     # lcd_send_command(LCD_SET_ENTRY_MODE)
                     # lcd_send_command(LCD_LINE_2)
-                    lcd_send_command(LCD_LINE_2)
+#                    lcd_send_command(LCD_LINE_2)
                     lcd_message("UNLOCKED!")
+                    # turn on a green LED; red LED off
+
                     print("Correct code")
 
                     typed_code = ""
-                    time.sleep(3)
+                    time.sleep(2)
                     # lcd_send_command(LCD_CLEAR_DISPLAY)
                     # lcd_send_command(LCD_RETURN_HOME)
                     # lcd_send_command(LCD_TURN_OFF_CURSOR)
@@ -342,26 +361,27 @@ def hardware_thread_func():
             break
     return
 
-if __name__ == 'main':
-    lcd_init()
 
-    # turn red LED on; green LED off
+lcd_init()
 
-    print("LCD Starting...")
-    time.sleep(1)
-    print("Begin test...")
+# turn red LED on; green LED off
 
-    read_serial_thread = threading.Thread(target=read_serial_thread_func)
-    read_serial_thread.start()
-    read_serial_thread.daemon = True
+print("LCD Starting...")
+time.sleep(1)
+print("Begin test...")
 
-    hardware_thread = threading.Thread(target=hardware_thread_func)
-    hardware_thread.start()
-    hardware_thread.daemon = True
+read_serial_thread = threading.Thread(target=read_serial_thread_func)
+read_serial_thread.daemon = True
+read_serial_thread.start()
 
-    # Wait for the thread to finish
-    read_serial_thread.join()
-    hardware_thread.join()
+LCD_thread = threading.Thread(target=hardware_thread_func)
+LCD_thread.daemon = True
+LCD_thread.start()
 
-    ser.close()
-    exit()
+# Wait for the thread to finish
+read_serial_thread.join()
+LCD_thread.join()
+
+ser.close()
+exit()
+
