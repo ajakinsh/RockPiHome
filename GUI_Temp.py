@@ -1,5 +1,7 @@
 import tkinter as tk
 from datetime import datetime
+import face_recognition
+import cv2
 
 class HomeownerPanel(tk.Frame):
     def __init__(self, parent):
@@ -39,6 +41,7 @@ class HomeownerPanel(tk.Frame):
         stream_video_button = tk.Button(control_frame, text="Stream Video", command=self.stream_video)
         stream_video_button.pack(side='top', pady=10)
 
+        global lock_unlock_button
         lock_unlock_button = tk.Button(control_frame, text="Lock/Unlock Door", command=self.toggle_lock)
         lock_unlock_button.pack(side='top', pady=10)
 
