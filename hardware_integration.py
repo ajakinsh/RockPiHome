@@ -1,6 +1,6 @@
 import mraa
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import serial
 
 # Define the possible serial port names
@@ -242,11 +242,11 @@ time.sleep(1)
 print("Begin test...")
 
 # set initial time
-last_command_time = time.time()
+last_command_time = datetime.now()
 
 # turn red LED on; green LED off
 
-ser.reset_input_buffer()
+# ser.reset_input_buffer()
 
 while True:
     try: #large try-except block used for closing things properly after a keyboard interrupt
@@ -276,7 +276,13 @@ while True:
         # if current_time - last_command_time >= 1:  # send command every second
         #     ser.write("C\n".encode())
         #     last_command_time = current_time
-        ser.write("C\n".encode())
+
+        # check if it's time to send the command
+        if datetime.now() - last_command_time >= timedelta(seconds=1):  # send command every second
+            ser.write("C\n".encode())
+            last_command_time = datetime.now()
+
+        # ser.write("C\n".encode())
 
 
         # Check if message indicates a fingerprint match; update LCD
