@@ -263,198 +263,188 @@ def read_keypad():
 
 def serial_thread_func():
     global last_command_time
+    while True:
+        if ser.in_waiting > 0:
+            # read from serial port
+            ser_data = ser.readline().decode().rstrip()
+            print("(Serial)\t", ser_data)
 
-    try: #large try-except block used for closing things properly
-        while True:
-            if ser.in_waiting > 0:
-                # read from serial port
-                ser_data = ser.readline().decode().rstrip()
-                print("(Serial)\t", ser_data)
+            # Check if message indicates a fingerprint match; update LCD
+            if "Found ID #" in ser_data:
+                global GLOBAL_SER
+                GLOBAL_SER = "finger unlock"
 
-                # Check if message indicates a fingerprint match; update LCD
-                if "Found ID #" in ser_data:
-                    global GLOBAL_SER
-                    GLOBAL_SER = "finger unlock"
-
-            # check if it's time to send the command
-            if datetime.now() - last_command_time >= timedelta(seconds=1):  # send command every second
-                ser.write("C\n".encode())
-                last_command_time = datetime.now()
-
-    finally:
-        return
+        # check if it's time to send the command
+        if datetime.now() - last_command_time >= timedelta(seconds=1):  # send command every second
+            ser.write("C\n".encode())
+            last_command_time = datetime.now()
 
 def socket_thread_func():
     global GLOBAL_FACE
-    try:
-        # Load the reference image
-        reference_image = face_recognition.load_image_file("jess.jpg")
-        reference_encoding = face_recognition.face_encodings(reference_image)[0]
+    # Load the reference image
+    reference_image = face_recognition.load_image_file("joe.jpg")
+    reference_encoding = face_recognition.face_encodings(reference_image)[0]
 
-        while True:
-            ####------ Check face -----#######
-            for i in range(10):
-                video_capture.grab()
+    while True:
+        ####------ Check face -----#######
+        for i in range(10):
+            video_capture.grab()
 
-            ret, frame = video_capture.read()
-            small_frame = cv2.resize(frame, (384, 216)) # make image smaller if huge
+        ret, frame = video_capture.read()
+        small_frame = cv2.resize(frame, (384, 216)) # make image smaller if huge
 
-            # Convert the image to RGB format
-            rgb_image = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+        # Convert the image to RGB format
+        rgb_image = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
 
-            # Detect faces in the image
-            face_locations = face_recognition.face_locations(rgb_image)
-            face_encodings = face_recognition.face_encodings(rgb_image, face_locations)
+        # Detect faces in the image
+        face_locations = face_recognition.face_locations(rgb_image)
+        face_encodings = face_recognition.face_encodings(rgb_image, face_locations)
 
-            # Compare each detected face to the reference image
-            for face_encoding in face_encodings:
-                match = face_recognition.compare_faces([reference_encoding], face_encoding, tolerance = 0.6)
-                if match[0]:
-                    print("Found Jess!")
-                    GLOBAL_FACE = "face unlock"
+        # Compare each detected face to the reference image
+        for face_encoding in face_encodings:
+            match = face_recognition.compare_faces([reference_encoding], face_encoding, tolerance = 0.6)
+            if match[0]:
+                print("Found Joe!")
+                GLOBAL_FACE = "face unlock"
 
-            ##########-------- End face check------#######
+        ##########-------- End face check------#######
 
-            message = msg_server.recv()
-            print(f"(GUI)\t{message}")
-            msg_server.send(b'OK')
+        message = msg_server.recv()
+        print(f"(GUI)\t{message}")
+        msg_server.send(b'OK')
 
-            if message == "b'stream":
-                reply = image_sender.send_image('Image: ', small_frame)
-            if message == "b'stopVid":
-                video_capture.release()
-                cv2.destroyAllWindows()
-
-    finally:
-        msg_server.close()
-        image_sender.close()
-        print("Socket is closed")
+        if message == "b'stream":
+            reply = image_sender.send_image('Image: ', small_frame)
+        if message == "b'stopVid":
+            video_capture.release()
+            cv2.destroyAllWindows()
 
 def keypad_thread_func():
     global GLOBAL_KEY
     global typed_code
-    try:
-        while True:
-            # Read From Keypad
-            key = read_keypad()
-            if key:
-                typed_code += str(key)
-                GLOBAL_KEY = "keypad entry"
+    while True:
+        # Read From Keypad
+        key = read_keypad()
+        if key:
+            typed_code += str(key)
+            GLOBAL_KEY = "keypad entry"
 
-            if len(typed_code) == 4:
-                if typed_code == saved_code:
-                    GLOBAL_KEY = "keypad unlock"
-                    print("Correct code")
-                    typed_code = ""
-                else:
-                    GLOBAL_KEY = "keypad wrong"
-                    print("Incorrect code")
-                    typed_code = ""
-    finally:
-        return
+        if len(typed_code) == 4:
+            if typed_code == saved_code:
+                GLOBAL_KEY = "keypad unlock"
+                print("Correct code")
+                typed_code = ""
+            else:
+                GLOBAL_KEY = "keypad wrong"
+                print("Incorrect code")
+                typed_code = ""
 
 def LCD_thread_func():
     global GLOBAL_SER
     global GLOBAL_KEY
     global GLOBAL_FACE
     global typed_code
-    try:
-        while True:
-            # Get the current time and format it as a string
-            current_time = datetime.now().strftime('%H:%M:%S')
+    while True:
+        # Get the current time and format it as a string
+        current_time = datetime.now().strftime('%H:%M:%S')
 
-            # Write the current time to the top line of the LCD
+        # Write the current time to the top line of the LCD
+        lcd_send_command(LCD_RETURN_HOME)
+        lcd_send_command(LCD_TURN_OFF_CURSOR)
+        lcd_send_command(LCD_SET_ENTRY_MODE)
+        lcd_message(current_time + "    ")
+
+        # red led on; green LED off
+        red.write(1)
+        green.write(0)
+
+        if GLOBAL_SER == "finger unlock" or GLOBAL_FACE == "face unlock":
             lcd_send_command(LCD_RETURN_HOME)
             lcd_send_command(LCD_TURN_OFF_CURSOR)
             lcd_send_command(LCD_SET_ENTRY_MODE)
-            lcd_message(current_time + "    ")
 
-            # red led on; green LED off
-            red.write(1)
-            green.write(0)
+            # Write a message to the bottom line of the LCD
+            lcd_send_command(LCD_LINE_2)
+            lcd_message("UNLOCKED!           ")
 
-            if GLOBAL_SER == "finger unlock" or GLOBAL_FACE == "face unlock":
-                lcd_send_command(LCD_RETURN_HOME)
-                lcd_send_command(LCD_TURN_OFF_CURSOR)
-                lcd_send_command(LCD_SET_ENTRY_MODE)
+            # turn on a green LED; red LED off
+            green.write(1)
+            red.write(0)
 
-                # Write a message to the bottom line of the LCD
-                lcd_send_command(LCD_LINE_2)
-                lcd_message("UNLOCKED!           ")
+            time.sleep(1)
+            lcd_send_command(LCD_LINE_2)
+            lcd_message("Hello user       ") # change to user's actual name later
+            time.sleep(1)
+            GLOBAL_SER = "finger lock"
 
-                # turn on a green LED; red LED off
-                green.write(1)
-                red.write(0)
+        if GLOBAL_KEY == "keypad lock" or GLOBAL_FACE == "face lock":
+            # Write a message to the bottom line of the LCD
+            lcd_send_command(LCD_LINE_2)
+            lcd_message("LOCKED        ")
 
-                time.sleep(1)
-                lcd_send_command(LCD_LINE_2)
-                lcd_message("Hello user       ") # change to user's actual name later
-                time.sleep(1)
-                GLOBAL_SER = "finger lock"
+        if GLOBAL_KEY == "keypad entry":
+            lcd_send_command(LCD_LINE_2)
+            lcd_send_command(LCD_TURN_OFF_CURSOR)
+            lcd_send_command(LCD_SET_ENTRY_MODE)
+            lcd_message(typed_code + "      ")
 
-            if GLOBAL_KEY == "keypad lock" or GLOBAL_FACE == "face lock":
-                # Write a message to the bottom line of the LCD
-                lcd_send_command(LCD_LINE_2)
-                lcd_message("LOCKED        ")
+        if GLOBAL_KEY == "keypad unlock":
+            lcd_send_command(LCD_LINE_2)
+            lcd_send_command(LCD_TURN_OFF_CURSOR)
+            lcd_send_command(LCD_SET_ENTRY_MODE)
+            lcd_message("UNLOCKED!  ")
 
-            if GLOBAL_KEY == "keypad entry":
-                lcd_send_command(LCD_LINE_2)
-                lcd_send_command(LCD_TURN_OFF_CURSOR)
-                lcd_send_command(LCD_SET_ENTRY_MODE)
-                lcd_message(typed_code + "      ")
+            # turn on a green LED; red LED off
+            green.write(1)
+            red.write(0)
 
-            if GLOBAL_KEY == "keypad unlock":
-                lcd_send_command(LCD_LINE_2)
-                lcd_send_command(LCD_TURN_OFF_CURSOR)
-                lcd_send_command(LCD_SET_ENTRY_MODE)
-                lcd_message("UNLOCKED!  ")
+        if GLOBAL_KEY == "keypad wrong":
+            lcd_send_command(LCD_LINE_2)
+            lcd_send_command(LCD_TURN_OFF_CURSOR)
+            lcd_send_command(LCD_SET_ENTRY_MODE)
+            lcd_message("INCORRECT!  ")
+            GLOBAL_KEY = "keypad lock"
 
-                # turn on a green LED; red LED off
-                green.write(1)
-                red.write(0)
+if __name__ == '__main__':
+    lcd_init()
 
-            if GLOBAL_KEY == "keypad wrong":
-                lcd_send_command(LCD_LINE_2)
-                lcd_send_command(LCD_TURN_OFF_CURSOR)
-                lcd_send_command(LCD_SET_ENTRY_MODE)
-                lcd_message("INCORRECT!  ")
-                GLOBAL_KEY = "keypad lock"
+    # turn red LED on; green LED off
+    red.write(1)
+    green.write(0)
+
+    print("LCD Starting...")
+    time.sleep(1)
+
+    try:
+        serial_thread = threading.Thread(target=serial_thread_func)
+        serial_thread.daemon = True
+        serial_thread.start()
+
+        socket_thread = threading.Thread(target=socket_thread_func)
+        socket_thread.daemon = True
+        socket_thread.start()
+
+        LCD_thread = threading.Thread(target=LCD_thread_func)
+        LCD_thread.daemon = True
+        LCD_thread.start()
+
+        keypad_thread = threading.Thread(target=keypad_thread_func)
+        keypad_thread.daemon = True
+        keypad_thread.start()
+
+        print("Begin test...")
+
+        # Wait for the threads to finish
+        serial_thread.join()
+        socket_thread.join()
+        LCD_thread.join()
+        keypad_thread.join()
+
     finally:
-        return
-
-
-lcd_init()
-
-# turn red LED on; green LED off
-red.write(1)
-green.write(0)
-
-print("LCD Starting...")
-time.sleep(1)
-
-serial_thread = threading.Thread(target=serial_thread_func)
-serial_thread.daemon = True
-serial_thread.start()
-
-socket_thread = threading.Thread(target=socket_thread_func)
-socket_thread.daemon = True
-socket_thread.start()
-
-LCD_thread = threading.Thread(target=LCD_thread_func)
-LCD_thread.daemon = True
-LCD_thread.start()
-
-keypad_thread = threading.Thread(target=keypad_thread_func)
-keypad_thread.daemon = True
-keypad_thread.start()
-
-print("Begin test...")
-
-# Wait for the threads to finish
-serial_thread.join()
-socket_thread.join()
-LCD_thread.join()
-keypad_thread.join()
-
-ser.close()
-exit()
+        ser.close()
+        msg_server.close()
+        image_sender.close()
+        video_capture.release()
+        cv2.destroyAllWindows()
+        print("Sockets closed")
+        exit()
