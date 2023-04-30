@@ -36,7 +36,7 @@ video_capture = cv2.VideoCapture(4)
 
 image_sender = imagezmq.ImageSender('tcp://10.144.113.220:5555')
 
-sock_addr = '10.144.113.220'
+sock_addr = '10.144.113.8'
 sock_port = 5570
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind(sock_addr, sock_port)
