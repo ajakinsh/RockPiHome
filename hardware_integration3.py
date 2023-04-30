@@ -1,4 +1,4 @@
-import zmq
+import socket
 import cv2
 import imagezmq
 import mraa
@@ -36,9 +36,12 @@ video_capture = cv2.VideoCapture(4)
 
 image_sender = imagezmq.ImageSender('tcp://10.144.113.220:5555')
 
-context = zmq.Context()
-msg_server = context.socket(zmq.REP)
-msg_server.bind('tcp://*:5570')
+sock_addr = '10.144.113.220'
+sock_port = 5570
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.bind(sock_addr, sock_port)
+sock.listen(1)
+print(f"Listening on {sock_addr}:{sock_port}")
 
 # Saved Door Lock Code
 saved_code = "5678"
@@ -310,9 +313,15 @@ def socket_thread_func():
 
         ##########-------- End face check------#######
 
-        message = msg_server.recv()
+        conn, addr = sock.accept()
+        print('Connected by', addr)
+        message = conn.recv(1024)
         print(f"(GUI)\t{message}")
-        msg_server.send(b'OK')
+
+        if not message:
+            continue
+        # Do some processing on the received data
+        conn.sendall(b'OK')
 
         if message == "b'stream":
             reply = image_sender.send_image('Image: ', small_frame)
@@ -450,7 +459,7 @@ if __name__ == '__main__':
 
     finally:
         ser.close()
-        msg_server.close()
+        sock.close()
         image_sender.close()
         video_capture.release()
         cv2.destroyAllWindows()

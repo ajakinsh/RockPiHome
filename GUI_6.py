@@ -2,17 +2,19 @@ import tkinter as tk
 from datetime import datetime
 import face_recognition
 import cv2
-import zmq
+import socket
 import imagezmq
 import numpy as np
 
 # Connect to Cam
 image_receiver = imagezmq.ImageHub()
-context = zmq.Context()
-msg_client = context.socket(zmq.REQ)
-# msg_client.connect("tcp://10.144.113.8:5570")
-msg_client.connect("tcp://10.144.113.233:5556")
-# msg_client.connect("tcp://10.144.113.90:5556")
+
+sock_addr = '10.144.113.220'
+sock_port = 5570
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.connect(sock_addr, sock_port)
+print(f"Connected to {sock_addr}:{sock_port}")
+
 stream = True
 
 
@@ -83,8 +85,8 @@ class HomeownerPanel(tk.Frame):
             success_lbl.pack(pady=5)
             print(f"Adding face ID: {face_id} with name {name} to the database")
             data = f"add_face: {face_id}: {name}"
-            msg_client.send(data.encode())
-            message = msg_client.recv()
+            sock.sendall(data.encode())
+            message = sock.recv(1024)
             print(f"(From Base)\t{message}")
             success_lbl.after(2000, success_lbl.destroy)
 
@@ -127,8 +129,8 @@ class HomeownerPanel(tk.Frame):
             success_lbl.pack(pady=5)
             print(f"Deleted face ID: {face_id} from the database")
             data = f"del_face: {face_id}"
-            msg_client.send(data.encode())
-            message = msg_client.recv()
+            sock.sendall(data.encode())
+            message = sock.recv(1024)
             print(f"(From Base)\t{message}")
             success_lbl.after(2000, success_lbl.destroy)
 
@@ -160,8 +162,8 @@ class HomeownerPanel(tk.Frame):
             success_lbl.pack(pady=5)
             print(f"Adding finger ID: {finger_id} to the database")
             data = f"add_finger: {finger_id}"
-            msg_client.send(data.encode())
-            message = msg_client.recv()
+            sock.sendall(data.encode())
+            message = sock.recv(1024)
             print(f"(From Base)\t{message}")
             success_lbl.after(2000, success_lbl.destroy)
 
@@ -195,8 +197,8 @@ class HomeownerPanel(tk.Frame):
             success_lbl.pack(pady=5)
             print(f"Deleting finger ID: {finger_id} from the database")
             data = f"del_finger: {finger_id}"
-            msg_client.send(data.encode())
-            message = msg_client.recv()
+            sock.sendall(data.encode())
+            message = sock.recv(1024)
             print(f"(From Base)\t{message}")
             success_lbl.after(2000, success_lbl.destroy)
 
@@ -243,8 +245,8 @@ class HomeownerPanel(tk.Frame):
 
         while True:
             if stream:
-                msg_client.send(b'stream')
-                message = msg_client.recv()
+                sock.sendall(b'stream')
+                message = sock.recv(1024)
                 print(f"(From Base)\t{message}")
 
                 # Receive from the camera
@@ -257,8 +259,8 @@ class HomeownerPanel(tk.Frame):
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     stream = False
             else:
-                msg_client.send(b'stopVid')
-                message = msg_client.recv()
+                sock.sendall(b'stopVid')
+                message = sock.recv(1024)
                 print(f"(From Base)\t{message}")
                 ret, frame = image_receiver.recv_image()
                 image_receiver.send_reply(b'stream suspended')
@@ -310,8 +312,8 @@ class HomeownerPanel(tk.Frame):
 
         # Send lock state to the server
         lock_state_msg = "locked" if self.locked else "unlocked"
-        msg_client.send(lock_state_msg.encode())
-        message = msg_client.recv()
+        sock.sendall(lock_state_msg.encode())
+        message = sock.recv(1024)
         print(f"(From Base)\t{message}")
         # print(f"Lock state sent to server: {lock_state_msg}")
 
@@ -319,7 +321,7 @@ def on_closing():
     global stream
     stream = False
     root.destroy()
-    msg_client.close()
+    sock.close()
     image_receiver.close()
     print("closed")
 
