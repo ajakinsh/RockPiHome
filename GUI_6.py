@@ -12,11 +12,10 @@ image_receiver = imagezmq.ImageHub()
 sock_addr = '10.144.113.8'
 sock_port = 5570
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.connect(sock_addr, sock_port)
+sock.connect((sock_addr, sock_port))
 print(f"Connected to {sock_addr}:{sock_port}")
 
 stream = True
-
 
 class HomeownerPanel(tk.Frame):
     def __init__(self, parent):
