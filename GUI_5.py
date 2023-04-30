@@ -65,6 +65,7 @@ class HomeownerPanel(tk.Frame):
         status_frame = tk.LabelFrame(self, text="System Status", font=("Helvetica", 14), padx=10, pady=10)
         status_frame.grid(row=5, column=0, padx=10, pady=10, sticky='nsew')
 
+        global status_label
         # add a label widget inside the status_frame
         status_label = tk.Label(status_frame, text="Status: OK", font=("Helvetica", 14))
         status_label.pack()
@@ -75,30 +76,138 @@ class HomeownerPanel(tk.Frame):
         self.after(1000, self.update_time)
 
     def add_face(self):
+        def add_face_id(face_id, name):
+            # Code to send face_id and name to the RockPi
+            success_lbl = tk.Label(popup, text=f"Added face ID: {face_id} with name {name} to the database", font=("Helvetica", 12), fg="green")
+            success_lbl.pack(pady=5)
+            print(f"Adding face ID: {face_id} with name {name} to the database")
+            success_lbl.after(2000, success_lbl.destroy)
+
         popup = tk.Toplevel(root)
-        popup.geometry("1000x200")
+        popup.geometry("1000x250")
         popup.title("Add Face ID")
         popup_lbl = tk.Label(popup, text="Stand in front of the camera. Press q to capture your Face ID image. Make sure your face is properly in the frame", font=("Helvetica", 12))
-        popup_lbl.pack(padx=20, pady=20)
-        ok_btn = tk.Button(popup, text="OK", font=("Helvetica", 12), command=popup.destroy)
+        popup_lbl.pack(padx=20, pady=10)
+
+        id_label = tk.Label(popup, text="Enter a numerical ID for this face:", font=("Helvetica", 12))
+        id_label.pack(pady=5)
+        id_entry = tk.Entry(popup, font=("Helvetica", 12))
+        id_entry.pack(pady=10)
+
+        name_label = tk.Label(popup, text="Enter the name for this face:", font=("Helvetica", 12))
+        name_label.pack(pady=5)
+        name_entry = tk.Entry(popup, font=("Helvetica", 12))
+        name_entry.pack(pady=10)
+
+        def add_id():
+            face_id = id_entry.get()
+            name = name_entry.get()
+            if face_id.isdigit() and name:
+                add_face_id(face_id, name)
+            elif not face_id.isdigit():
+                error_lbl = tk.Label(popup, text="Please enter a numerical ID", font=("Helvetica", 12), fg="red")
+                error_lbl.after(2000, error_lbl.destroy)
+                error_lbl.pack(pady=5)
+            else:
+                error_lbl = tk.Label(popup, text="Please enter a name", font=("Helvetica", 12), fg="red")
+                error_lbl.after(2000, error_lbl.destroy)
+                error_lbl.pack(pady=5)
+
+        ok_btn = tk.Button(popup, text="OK", font=("Helvetica", 12), command=add_id)
         ok_btn.pack(padx=20, pady=10)
 
     def delete_face(self):
-        # Code to delete a face ID
-        pass
+        def delete_face_id(face_id):
+            success_lbl = tk.Label(popup, text=f"Deleted face ID: {face_id} ", font=("Helvetica", 12), fg="blue")
+            success_lbl.pack(pady=5)
+            success_lbl.after(2000, success_lbl.destroy)
+            # Code to send face_id to the RockPi to delete the corresponding face from the database
+            print(f"Deleted face ID: {face_id} from the database")
 
-    def add_fingerprint(self):
         popup = tk.Toplevel(root)
-        popup.geometry("1000x200")
-        popup.title("Add Face ID")
-        popup_lbl = tk.Label(popup, text="Place your finger on the sensor and wait for instructions", font=("Helvetica", 12))
-        popup_lbl.pack(padx=20, pady=20)
-        ok_btn = tk.Button(popup, text="OK", font=("Helvetica", 12), command=popup.destroy)
+        popup.geometry("500x200")
+        popup.title("Delete Face ID")
+        popup_lbl = tk.Label(popup, text="Enter the numerical ID of the face you want to delete", font=("Helvetica", 12))
+        popup_lbl.pack(padx=20, pady=10)
+        entry_label = tk.Label(popup, text="Face ID:", font=("Helvetica", 12))
+        entry_label.pack(pady=5)
+        entry = tk.Entry(popup, font=("Helvetica", 12))
+        entry.pack(pady=10)
+
+        def delete_id():
+            face_id = entry.get()
+            if face_id.isdigit():
+                delete_face_id(face_id)
+            else:
+                error_lbl = tk.Label(popup, text="Please enter a numerical ID", font=("Helvetica", 12), fg="red")
+                error_lbl.after(2000, error_lbl.destroy)
+                error_lbl.pack(pady=5)
+
+        ok_btn = tk.Button(popup, text="OK", font=("Helvetica", 12), command=delete_id)
         ok_btn.pack(padx=20, pady=10)
 
+    def add_fingerprint(self):
+        def add_finger_id(finger_id):
+            # Code to send fingerid to the RockPi
+            success_lbl = tk.Label(popup, text=f"Added finger {finger_id}", font=("Helvetica", 12), fg="green")
+            success_lbl.pack(pady=5)
+            print(f"Adding finger ID: {finger_id} to the database")
+            success_lbl.after(2000, success_lbl.destroy)
+
+        popup = tk.Toplevel(root)
+        popup.geometry("1000x250")
+        popup.title("Add Finger ID")
+        popup_lbl = tk.Label(popup, text="Place your finger on the sensor and wait for instructions", font=("Helvetica", 12))
+        popup_lbl.pack(padx=20, pady=10)
+        entry_label = tk.Label(popup, text="Fingerprint ID:", font=("Helvetica", 12))
+        entry_label.pack(pady=5)
+        entry = tk.Entry(popup, font=("Helvetica", 12))
+        entry.pack(pady=10)
+
+        def add_id():
+            finger_id = entry.get()
+            if finger_id.isdigit():
+                add_finger_id(finger_id)
+            else:
+                error_lbl = tk.Label(popup, text="Please enter a numerical ID", font=("Helvetica", 12), fg="red")
+                error_lbl.after(2000, error_lbl.destroy)
+                error_lbl.pack(pady=5)
+
+        ok_btn = tk.Button(popup, text="OK", font=("Helvetica", 12), command=add_id)
+        ok_btn.pack(padx=20, pady=10)
+
+
     def delete_fingerprint(self):
-        # Code to delete a fingerprint
-        pass
+        def delete_finger_id(finger_id):
+            # Code to send face_id and name to the RockPi
+            success_lbl = tk.Label(popup, text=f"Deleted finger {finger_id}", font=("Helvetica", 12), fg="blue")
+            success_lbl.pack(pady=5)
+            success_lbl.after(2000, success_lbl.destroy)
+            # Code to send face_id to the RockPi to delete the corresponding face from the database
+            print(f"Deleting finger ID: {finger_id} from the database")
+
+        popup = tk.Toplevel(root)
+        popup.geometry("500x200")
+        popup.title("Delete Fingerprint ID")
+        popup_lbl = tk.Label(popup, text="Enter the numerical ID of the fingerprint you want to delete", font=("Helvetica", 12))
+        popup_lbl.pack(padx=20, pady=10)
+        entry_label = tk.Label(popup, text="Fingerprint ID:", font=("Helvetica", 12))
+        entry_label.pack(pady=5)
+        entry = tk.Entry(popup, font=("Helvetica", 12))
+        entry.pack(pady=10)
+
+        def delete_id():
+            finger_id = entry.get()
+            if finger_id.isdigit():
+                delete_finger_id(finger_id)
+            else:
+                error_lbl = tk.Label(popup, text="Please enter a numerical ID", font=("Helvetica", 12), fg="red")
+                error_lbl.after(2000, error_lbl.destroy)
+                error_lbl.pack(pady=5)
+
+        ok_btn = tk.Button(popup, text="OK", font=("Helvetica", 12), command=delete_id)
+        ok_btn.pack(padx=20, pady=10)
+
 
     def stream_video(self):
         # Code to stream video from camera
@@ -155,11 +264,19 @@ class HomeownerPanel(tk.Frame):
         # cv2.destroyAllWindows()
 
     def toggle_lock(self):
+        global status_label
         # Code to lock or unlock the door
         if lock_unlock_button.config('text')[-1] == 'LOCK':
             lock_unlock_button.config(text='UNLOCK', bg='green')
+            status_label.config(text="System Status: Door Locked")
+            # msg_client.send(b'lock')
+            # message = msg_client.recv()
+            # Comment out messaging to see this work partially
         else:
             lock_unlock_button.config(text='LOCK', bg='red')
+            status_label.config(text="System Status: Door Unlocked")
+            # msg_client.send(b'unlock')
+            # message = msg_client.recv()
 
 def on_closing():
     global stream

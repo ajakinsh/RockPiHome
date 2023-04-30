@@ -83,9 +83,7 @@ lcd_d7.dir(mraa.DIR_OUT)
 lcd_columns = 16
 lcd_rows = 2
 
-# Define LED pins
-green = mraa.Gpio(11)
-green.dir(mraa.DIR_OUT)
+# Define red LED
 red = mraa.Gpio(12)
 red.dir(mraa.DIR_OUT)
 
@@ -281,8 +279,9 @@ def serial_thread_func():
 
 def socket_thread_func():
     global GLOBAL_FACE
+    global GLOBAL_KEY
     # Load the reference image
-    reference_image = face_recognition.load_image_file("joe.jpg")
+    reference_image = face_recognition.load_image_file("jess.jpg")
     reference_encoding = face_recognition.face_encodings(reference_image)[0]
 
     while True:
@@ -304,7 +303,7 @@ def socket_thread_func():
         for face_encoding in face_encodings:
             match = face_recognition.compare_faces([reference_encoding], face_encoding, tolerance = 0.6)
             if match[0]:
-                print("Found Joe!")
+                print("Found Jess!")
                 GLOBAL_FACE = "face unlock"
 
         ##########-------- End face check------#######
@@ -318,6 +317,10 @@ def socket_thread_func():
         if message == "b'stopVid":
             video_capture.release()
             cv2.destroyAllWindows()
+        if message == "b'lock":
+            GLOBAL_KEY = "gui lock"
+        if message == "b'lock":
+            GLOBAL_KEY = "gui unlock"
 
 def keypad_thread_func():
     global GLOBAL_KEY
@@ -354,9 +357,8 @@ def LCD_thread_func():
         lcd_send_command(LCD_SET_ENTRY_MODE)
         lcd_message(current_time + "    ")
 
-        # red led on; green LED off
+        # red led on
         red.write(1)
-        green.write(0)
 
         if GLOBAL_SER == "finger unlock" or GLOBAL_FACE == "face unlock":
             lcd_send_command(LCD_RETURN_HOME)
@@ -367,8 +369,7 @@ def LCD_thread_func():
             lcd_send_command(LCD_LINE_2)
             lcd_message("UNLOCKED!           ")
 
-            # turn on a green LED; red LED off
-            green.write(1)
+            # red LED off
             red.write(0)
 
             time.sleep(1)
@@ -376,8 +377,9 @@ def LCD_thread_func():
             lcd_message("Hello user       ") # change to user's actual name later
             time.sleep(1)
             GLOBAL_SER = "finger lock"
+            GLOBAL_FACE = "face lock"
 
-        if GLOBAL_KEY == "keypad lock" or GLOBAL_FACE == "face lock":
+        if GLOBAL_KEY == "keypad lock" or GLOBAL_KEY == "gui lock" or GLOBAL_FACE == "face lock":
             # Write a message to the bottom line of the LCD
             lcd_send_command(LCD_LINE_2)
             lcd_message("LOCKED        ")
@@ -388,14 +390,13 @@ def LCD_thread_func():
             lcd_send_command(LCD_SET_ENTRY_MODE)
             lcd_message(typed_code + "      ")
 
-        if GLOBAL_KEY == "keypad unlock":
+        if GLOBAL_KEY == "keypad unlock" or GLOBAL_KEY == "gui lock":
             lcd_send_command(LCD_LINE_2)
             lcd_send_command(LCD_TURN_OFF_CURSOR)
             lcd_send_command(LCD_SET_ENTRY_MODE)
             lcd_message("UNLOCKED!  ")
 
-            # turn on a green LED; red LED off
-            green.write(1)
+            # red LED off
             red.write(0)
 
         if GLOBAL_KEY == "keypad wrong":
@@ -408,9 +409,8 @@ def LCD_thread_func():
 if __name__ == '__main__':
     lcd_init()
 
-    # turn red LED on; green LED off
+    # turn red LED on
     red.write(1)
-    green.write(0)
 
     print("LCD Starting...")
     time.sleep(1)
