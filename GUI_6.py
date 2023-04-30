@@ -9,7 +9,7 @@ import numpy as np
 # Connect to Cam
 image_receiver = imagezmq.ImageHub()
 
-sock_addr = '10.144.113.220'
+sock_addr = '10.144.113.8'
 sock_port = 5570
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect(sock_addr, sock_port)
