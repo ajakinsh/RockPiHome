@@ -10,7 +10,8 @@ import numpy as np
 image_receiver = imagezmq.ImageHub()
 context = zmq.Context()
 msg_client = context.socket(zmq.REP)
-msg_client.connect("tcp://10.144.113.8:5556")
+# msg_client.connect("tcp://10.144.113.8:5556")
+msg_client.connect("tcp://10.144.113.90:5556")
 stream = True
 
 
