@@ -34,7 +34,7 @@ except:
 
 video_capture = cv2.VideoCapture(4)
 
-image_sender = imagezmq.ImageSender('tcp://10.144.113.90:5555')
+image_sender = imagezmq.ImageSender('tcp://10.144.113.220:5555')
 
 context = zmq.Context()
 msg_server = context.socket(zmq.REP)
@@ -83,7 +83,9 @@ lcd_d7.dir(mraa.DIR_OUT)
 lcd_columns = 16
 lcd_rows = 2
 
-# Define red LED
+# Define LEDs
+green = mraa.Gpio(3)
+green.dir(mraa.DIR_OUT)
 red = mraa.Gpio(12)
 red.dir(mraa.DIR_OUT)
 
@@ -359,6 +361,7 @@ def LCD_thread_func():
 
         # red led on
         red.write(1)
+        green.write(0)
 
         if GLOBAL_SER == "finger unlock" or GLOBAL_FACE == "face unlock":
             lcd_send_command(LCD_RETURN_HOME)
@@ -371,6 +374,8 @@ def LCD_thread_func():
 
             # red LED off
             red.write(0)
+            green.write(0)
+
 
             time.sleep(1)
             lcd_send_command(LCD_LINE_2)
@@ -398,6 +403,7 @@ def LCD_thread_func():
 
             # red LED off
             red.write(0)
+            green.write(1)
 
         if GLOBAL_KEY == "keypad wrong":
             lcd_send_command(LCD_LINE_2)
@@ -411,6 +417,8 @@ if __name__ == '__main__':
 
     # turn red LED on
     red.write(1)
+    green.write(0)
+
 
     print("LCD Starting...")
     time.sleep(1)

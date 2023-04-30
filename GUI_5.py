@@ -81,6 +81,10 @@ class HomeownerPanel(tk.Frame):
             success_lbl = tk.Label(popup, text=f"Added face ID: {face_id} with name {name} to the database", font=("Helvetica", 12), fg="green")
             success_lbl.pack(pady=5)
             print(f"Adding face ID: {face_id} with name {name} to the database")
+            data = f"add_face: {face_id}: {name}"
+            msg_client.send(data.encode())
+            message = msg_client.recv()
+            print(f"(From Base)\tmessage")
             success_lbl.after(2000, success_lbl.destroy)
 
         popup = tk.Toplevel(root)
@@ -120,9 +124,12 @@ class HomeownerPanel(tk.Frame):
         def delete_face_id(face_id):
             success_lbl = tk.Label(popup, text=f"Deleted face ID: {face_id} ", font=("Helvetica", 12), fg="blue")
             success_lbl.pack(pady=5)
-            success_lbl.after(2000, success_lbl.destroy)
-            # Code to send face_id to the RockPi to delete the corresponding face from the database
             print(f"Deleted face ID: {face_id} from the database")
+            data = f"del_face: {face_id}"
+            msg_client.send(data.encode())
+            message = msg_client.recv()
+            print(f"(From Base)\tmessage")
+            success_lbl.after(2000, success_lbl.destroy)
 
         popup = tk.Toplevel(root)
         popup.geometry("500x200")
@@ -148,10 +155,13 @@ class HomeownerPanel(tk.Frame):
 
     def add_fingerprint(self):
         def add_finger_id(finger_id):
-            # Code to send fingerid to the RockPi
             success_lbl = tk.Label(popup, text=f"Added finger {finger_id}", font=("Helvetica", 12), fg="green")
             success_lbl.pack(pady=5)
             print(f"Adding finger ID: {finger_id} to the database")
+            data = f"add_finger: {finger_id}"
+            msg_client.send(data.encode())
+            message = msg_client.recv()
+            print(f"(From Base)\tmessage")
             success_lbl.after(2000, success_lbl.destroy)
 
         popup = tk.Toplevel(root)
@@ -182,9 +192,13 @@ class HomeownerPanel(tk.Frame):
             # Code to send face_id and name to the RockPi
             success_lbl = tk.Label(popup, text=f"Deleted finger {finger_id}", font=("Helvetica", 12), fg="blue")
             success_lbl.pack(pady=5)
-            success_lbl.after(2000, success_lbl.destroy)
-            # Code to send face_id to the RockPi to delete the corresponding face from the database
             print(f"Deleting finger ID: {finger_id} from the database")
+            data = f"del_finger: {finger_id}"
+            msg_client.send(data.encode())
+            message = msg_client.recv()
+            print(f"(From Base)\tmessage")
+            success_lbl.after(2000, success_lbl.destroy)
+
 
         popup = tk.Toplevel(root)
         popup.geometry("500x200")
@@ -230,6 +244,7 @@ class HomeownerPanel(tk.Frame):
             if stream:
                 msg_client.send(b'stream')
                 message = msg_client.recv()
+                print(f"(From Base)\tmessage")
 
                 # Receive from the camera
                 ret, frame = image_receiver.recv_image()
@@ -243,6 +258,7 @@ class HomeownerPanel(tk.Frame):
             else:
                 msg_client.send(b'stopVid')
                 message = msg_client.recv()
+                print(f"(From Base)\tmessage")
                 ret, frame = image_receiver.recv_image()
                 image_receiver.send_reply(b'stream suspended')
                 cv2.destroyAllWindows()
