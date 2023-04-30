@@ -84,7 +84,7 @@ class HomeownerPanel(tk.Frame):
             success_lbl.after(2000, success_lbl.destroy)
 
         popup = tk.Toplevel(root)
-        popup.geometry("1000x250")
+        popup.geometry("1000x450")
         popup.title("Add Face ID")
         popup_lbl = tk.Label(popup, text="Stand in front of the camera. Press q to capture your Face ID image. Make sure your face is properly in the frame", font=("Helvetica", 12))
         popup_lbl.pack(padx=20, pady=10)
