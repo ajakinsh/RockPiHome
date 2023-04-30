@@ -10,8 +10,8 @@ import numpy as np
 image_receiver = imagezmq.ImageHub()
 context = zmq.Context()
 msg_client = context.socket(zmq.REP)
-# msg_client.connect("tcp://10.144.113.8:5556")
-msg_client.connect("tcp://10.144.113.90:5556")
+msg_client.connect("tcp://10.144.113.8:5570")
+# msg_client.connect("tcp://10.144.113.90:5556")
 stream = True
 
 
@@ -66,7 +66,7 @@ class HomeownerPanel(tk.Frame):
         status_frame.grid(row=5, column=0, padx=10, pady=10, sticky='nsew')
 
         # add a label widget inside the status_frame
-        status_label = tk.Label(status_frame, text="Status: OK", font=("Helvetica", 14),)
+        status_label = tk.Label(status_frame, text="Status: OK", font=("Helvetica", 14))
         status_label.pack()
 
     def update_time(self):
@@ -102,7 +102,6 @@ class HomeownerPanel(tk.Frame):
 
     def stream_video(self):
         # Code to stream video from camera
-        # Code to stream video from camera
 
         # create a new window for video stream
         video_window = tk.Toplevel(root)
@@ -125,54 +124,45 @@ class HomeownerPanel(tk.Frame):
         reference_encoding = face_recognition.face_encodings(reference_image)[0]
 
         global stream 
-        if stream:
-            msg_client.send(b'stream')
-            # Receive from the camera
-            ret, frame = image_receiver.recv_image()
-            small_frame = cv2.resize(frame, (384, 216)) # make image smaller if huge
-            cv2.imshow("Video Stream", small_frame)
-            # cv2.waitKey(1) 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                stream = False
-
-            else:
-                msg_client.send(b'stopVid')
-                ret, frame = image_receiver.recv_image()
-                image_receiver.send_reply(b'stream suspended')
-                cv2.destroyAllWindows()
 
         # Wait for the camera to warm up
-        while True:
-            
-            # Convert the image to RGB format
-            rgb_image = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+        try: 
+            while True:
+                if stream:
+                    message = msg_client.recv()
+                    msg_client.send(b'stream')
+                    # Receive from the camera
+                    ret, frame = image_receiver.recv_image()
+                    small_frame = cv2.resize(frame, (384, 216)) # make image smaller if huge
+                    cv2.imshow("Video Stream", small_frame)
+                    # status_label = tk.Label(status_frame, text="Connected to camera", font=("Helvetica", 14))
+                    # status_label.pack()
+                    # cv2.waitKey(1) 
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        stream = False
+                else:
+                    message = msg_client.recv()
+                    msg_client.send(b'stopVid')
+                    ret, frame = image_receiver.recv_image()
+                    image_receiver.send_reply(b'stream suspended')
+                    cv2.destroyAllWindows()
+                    # status_label = tk.Label(status_frame, text="Stream suspended", font=("Helvetica", 14))
+                    # status_label.pack()
+        except KeyboardInterrupt:
+            pass
+            # msg_client.close()
+            # status_label = tk.Label(status_frame, text="Socket closed due to ", font=("Helvetica", 14))
+            # status_label.pack()
 
-            # Detect faces in the image
-            face_locations = face_recognition.face_locations(rgb_image)
-            face_encodings = face_recognition.face_encodings(rgb_image, face_locations)
+        #     # Display the resulting image
+        #     cv2.imshow('Video', frame)
 
-            # Draw a box around each detected face
-            for top, right, bottom, left in face_locations:
-                cv2.rectangle(small_frame, (left, top), (right, bottom), (0, 0, 255), 2)
+        #     # Wait for a key press
+        #     if cv2.waitKey(1) & 0xFF == ord('q'):
+        #         break
 
-            # Compare each detected face to the reference image
-            for face_encoding in face_encodings:
-                match = face_recognition.compare_faces([reference_encoding], face_encoding, tolerance = 0.6)
-                if match[0]:
-                    print("Found Jess!")
-                    # Draw a green box around the matched face
-                    cv2.rectangle(small_frame, (left, top), (right, bottom), (0, 255, 0), 2)
-                    cv2.putText(small_frame, "Hi Jess", (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-            # Display the resulting image
-            cv2.imshow('Video', small_frame)
-
-            # Wait for a key press
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-        # Release the camera and close the window
-        cv2.destroyAllWindows()
+        # # Release the camera and close the window
+        # cv2.destroyAllWindows()
 
     def toggle_lock(self):
         # Code to lock or unlock the door
@@ -180,6 +170,12 @@ class HomeownerPanel(tk.Frame):
             lock_unlock_button.config(text='UNLOCK', bg='green')
         else:
             lock_unlock_button.config(text='LOCK', bg='red')
+
+def on_closing():
+    root.destroy()
+    msg_client.close()
+    image_receiver.close()
+    print("closed")
 
 if __name__ == '__main__':
     root = tk.Tk()
@@ -189,4 +185,5 @@ if __name__ == '__main__':
     root.configure(bg="white")
     panel = HomeownerPanel(root)
     panel.pack(expand=True, fill='both')
+    root.protocol("WM_DELETE_WINDOW", on_closing)
     root.mainloop()
