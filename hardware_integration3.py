@@ -36,6 +36,9 @@ video_capture = cv2.VideoCapture(4)
 
 image_sender = imagezmq.ImageSender('tcp://10.144.113.220:5555')
 
+conn = None
+addr = None
+
 try:
     sock_addr = '10.144.113.8'
     sock_port = 5570
@@ -319,24 +322,24 @@ def socket_thread_func():
                 GLOBAL_FACE = "face unlock"
 
         ##########-------- End face check------#######
+        if conn is not None:
+            message = conn.recv(1024)
+            print(f"(GUI)\t{message}")
 
-        message = conn.recv(1024)
-        print(f"(GUI)\t{message}")
+            if not message:
+                continue
+            # Do some processing on the received data
+            conn.sendall(b'OK')
 
-        if not message:
-            continue
-        # Do some processing on the received data
-        conn.sendall(b'OK')
-
-        if message == "b'stream":
-            reply = image_sender.send_image('Image: ', small_frame)
-        if message == "b'stopVid":
-            video_capture.release()
-            cv2.destroyAllWindows()
-        if message == "b'locked":
-            GLOBAL_KEY = "gui lock"
-        if message == "b'unlocked":
-            GLOBAL_KEY = "gui unlock"
+            if message == "b'stream":
+                reply = image_sender.send_image('Image: ', small_frame)
+            if message == "b'stopVid":
+                video_capture.release()
+                cv2.destroyAllWindows()
+            if message == "b'locked":
+                GLOBAL_KEY = "gui lock"
+            if message == "b'unlocked":
+                GLOBAL_KEY = "gui unlock"
 
 def keypad_thread_func():
     global GLOBAL_KEY
@@ -464,7 +467,9 @@ if __name__ == '__main__':
 
     finally:
         ser.close()
-        conn.close()
+        if conn is not None:
+            conn.shutdown(socket.SHUT_RDWR)
+            conn.close()
         sock.close()
         image_sender.close()
         video_capture.release()
