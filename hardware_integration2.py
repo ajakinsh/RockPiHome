@@ -309,8 +309,8 @@ def socket_thread_func():
                 if filename.endswith('.jpg'):
                     image_path = os.path.join('./faces', filename)
                     image = face_recognition.load_image_file(image_path)
-                    face_encoding = face_recognition.face_encodings(image)
-                    known_face_encodings.append(face_encoding)
+                    face_encodings = face_recognition.face_encodings(image)
+                    known_face_encodings.append(face_encodings)
                     known_faces_names.append(os.path.splitext(filename)[0])
 
             # # Detect faces in the image
@@ -326,15 +326,24 @@ def socket_thread_func():
             rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
 
             # Detect faces in the image
-            live_face_locations = face_recognition.face_locations(rgb_frame)
-            live_face_encodings = face_recognition.face_encodings(rgb_frame, live_face_locations)
+            # live_face_locations = face_recognition.face_locations(rgb_frame)
+            live_face_encodings = face_recognition.face_encodings(rgb_frame)
+
+            for i, live_face_encoding in enumerate(live_face_encodings):
+                matches = face_recognition.compare_faces(known_face_encodings, live_face_encoding)
+                name = "Unknown"
+                if True in matches:
+                    match_index = matches.index(True)
+                    name = known_faces_names[match_index]
+                    print(f"Found {name}!")
+                    GLOBAL_FACE = "face unlock"
 
             # Compare each detected face to the face encodings in the file
-            for face_encoding, face_name in zip(known_face_encodings, known_faces_names):
-                match = face_recognition.compare_faces([face_encoding], live_face_encodings, tolerance = 0.6)
-                if match[0]:
-                    print(f"Found {face_name}!")
-                    GLOBAL_FACE = "face unlock"
+            # for face_encoding, face_name in zip(known_face_encodings, known_faces_names):
+            #     match = face_recognition.compare_faces([face_encoding], live_face_encodings, tolerance = 0.6)
+            #     if match[0]:
+            #         print(f"Found {face_name}!")
+            #         GLOBAL_FACE = "face unlock"
 
             message = msg_server.recv()
             print(f"(GUI)\t{message}")
