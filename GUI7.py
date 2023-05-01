@@ -147,8 +147,6 @@ class HomeownerPanel(tk.Frame):
             print(f"Adding finger ID: {finger_id} to the database")
             data = f"add_finger: {finger_id}"
             socket.send_multipart([b"add_finger", data.encode()])
-
-            print(f"(From Base)\t{message}")
             success_lbl.after(2000, success_lbl.destroy)
 
         popup = tk.Toplevel(root)
@@ -219,10 +217,6 @@ class HomeownerPanel(tk.Frame):
         # msg_client.connect("tcp://10.144.113.8:5556")
         # stream = True
 
-        # Load the reference image
-        reference_image = face_recognition.load_image_file("jess.jpg")
-        reference_encoding = face_recognition.face_encodings(reference_image)[0]
-
         global stream
 
         while True:
@@ -242,45 +236,6 @@ class HomeownerPanel(tk.Frame):
                 ret, frame = image_receiver.recv_image()
                 image_receiver.send_reply(b'stream suspended')
                 cv2.destroyAllWindows()
-                # status_label = tk.Label(status_frame, text="Stream suspended", font=("Helvetica", 14))
-                # status_label.pack()
-
-            # msg_client.close()
-            # status_label = tk.Label(status_frame, text="Socket closed due to ", font=("Helvetica", 14))
-            # status_label.pack()
-
-        #     # Display the resulting image
-        #     cv2.imshow('Video', frame)
-
-        #     # Wait for a key press
-        #     if cv2.waitKey(1) & 0xFF == ord('q'):
-        #         break
-
-        # # Release the camera and close the window
-        # cv2.destroyAllWindows()
-
-    # def toggle_lock(self):
-    #     global status_label
-    #     # Code to lock or unlock the door
-    #     if lock_unlock_button.config('text')[-1] == 'PRESS TO UNLOCK':
-    #         lock_unlock_button.config(text='PRESS TO LOCK', bg='red')
-    #         status_label.config(text="System Status: Door Unlocked")
-    #         msg_client.send(b'unlock')
-    #         message = msg_client.recv()
-    #         print(f"(From Base)\t{message}")
-
-    #         # lock_unlock_button.config(text='PRESS TO UNLOCK', bg='green')
-    #         # status_label.config(text="System Status: Door Locked")
-    #         # msg_client.send(b'lock')
-    #         # message = msg_client.recv()
-    #         # print(f"(From Base)\t{message}")
-
-    #     else:
-    #         lock_unlock_button.config(text='PRESS TO UNLOCK', bg='green')
-    #         status_label.config(text="System Status: Door Locked")
-    #         msg_client.send(b'lock')
-    #         message = msg_client.recv()
-    #         print(f"(From Base)\t{message}")
 
     def toggle_lock(self):
         self.locked = not self.locked

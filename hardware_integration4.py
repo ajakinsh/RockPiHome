@@ -374,7 +374,7 @@ def socket_thread_func():
 
             topic, message = socket.recv_multipart()
 
-            print(f"(GUI)\t{message.decode()}")
+            print(f"(GUI)\t{message}")
 
             if message == "b'stream":
                 reply = image_sender.send_image('Image: ', small_frame)
@@ -415,22 +415,22 @@ def socket_thread_func():
                 # Save the image as a JPEG file
                 cv2.imwrite(f"./faces/{face_id}.jpg", small_frame)
 
-                if message.startswith(b'del_face'):
-                    try:
-                        face_id = message.decode().split(":")[1]
-                        os.remove(f'./faces/{face_id}.jpg')
-                    except FileNotFoundError:
-                        print(f"File not found")
-                    except Exception as e:
-                        print(f"{str(e)}")
+            if message.startswith(b'del_face'):
+                try:
+                    face_id = message.decode().split(":")[1]
+                    os.remove(f'./faces/{face_id}.jpg')
+                except FileNotFoundError:
+                    print(f"File not found")
+                except Exception as e:
+                    print(f"{str(e)}")
 
-                    # GLOBAL_FACE = f"del: {face_id}"
-                if message.startswith(b'add_finger'):
-                    finger_id = message.decode().split(":")[1]
-                    GLOBAL_FINGER = f"E{finger_id}\n"
-                if message.startswith(b'del_finger'):
-                    finger_id = message.decode().split(":")[1]
-                    GLOBAL_FINGER = "D{finger_id}\n"
+                # GLOBAL_FACE = f"del: {face_id}"
+            if message.startswith(b'add_finger'):
+                finger_id = message.decode().split(":")[1]
+                GLOBAL_FINGER = f"E{finger_id}\n"
+            if message.startswith(b'del_finger'):
+                finger_id = message.decode().split(":")[1]
+                GLOBAL_FINGER = "D{finger_id}\n"
 
         finally:
             socket.close()
