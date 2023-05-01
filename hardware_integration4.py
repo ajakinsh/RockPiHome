@@ -46,7 +46,7 @@ image_sender = imagezmq.ImageSender('tcp://10.144.113.8:5555')
 
 context = zmq.Context()
 socket = context.socket(zmq.SUB)
-socket.connect('tcp://10.144.113.8:5557')
+socket.connect('tcp://10.144.113.8:5558')
 socket.setsockopt(zmq.SUBSCRIBE, b"locked")
 socket.setsockopt(zmq.SUBSCRIBE, b"stream")
 socket.setsockopt(zmq.SUBSCRIBE, b"add_finger")
@@ -330,110 +330,121 @@ def socket_thread_func():
     while True:
         known_face_encodings = []
         known_faces_names = []
+        
+        #        try:
+        for filename in os.listdir('./faces'):
+            if filename.endswith('.jpg'):
+                image_path = os.path.join('./faces', filename)
+                image = face_recognition.load_image_file(image_path)
+                face_encodings = face_recognition.face_encodings(image)
+                known_face_encodings.append(face_encodings)
+                known_faces_names.append(os.path.splitext(filename)[0])
 
-        try:
-            for filename in os.listdir('./faces'):
-                if filename.endswith('.jpg'):
-                    image_path = os.path.join('./faces', filename)
-                    image = face_recognition.load_image_file(image_path)
-                    face_encodings = face_recognition.face_encodings(image)
-                    known_face_encodings.append(face_encodings)
-                    known_faces_names.append(os.path.splitext(filename)[0])
+        # # Detect faces in the image
+        # unknown_image = face_recognition.load_image_file("unknown.jpg")
+        # face_locations = face_recognition.face_locations(unknown_image)
+        # face_encodings = face_recognition.face_encodings(unknown_image, face_locations)
 
-            # # Detect faces in the image
-            # unknown_image = face_recognition.load_image_file("unknown.jpg")
-            # face_locations = face_recognition.face_locations(unknown_image)
-            # face_encodings = face_recognition.face_encodings(unknown_image, face_locations)
+        # Capture a frame from the camera
+        ret, frame = video_capture.read()
+        small_frame = cv2.resize(frame, (384, 216)) # make image smaller if huge
 
-            # Capture a frame from the camera
-            ret, frame = video_capture.read()
-            small_frame = cv2.resize(frame, (384, 216)) # make image smaller if huge
+        # Convert the image to RGB format
+        rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+
+        # Detect faces in the image
+        # live_face_locations = face_recognition.face_locations(rgb_frame)
+        live_face_encodings = face_recognition.face_encodings(rgb_frame)
+
+        for i, live_face_encoding in enumerate(live_face_encodings):
+            matches = face_recognition.compare_faces(known_face_encodings, live_face_encoding)
+            name = "Unknown"
+            if True in matches:
+                match_index = matches.index(True)
+                name = known_faces_names[match_index]
+                print(f"Found {name}!")
+                GLOBAL_FACE = "face unlock"
+                
+        jess_image = face_recognition.load_image_file("./faces/jess.jpg")
+        jess_encoding = face_recognition.face_encodings(jess_image)[0]
+        
+        jess_match = face_recognition.compare_faces(jess_encoding, live_face_encoding, tolerance = 0.6)
+        if jess_match:
+            print("Found Jess!")
+            GLOBAL_FACE = "face unlock"
+
+        # Compare each detected face to the face encodings in the file
+        # for face_encoding, face_name in zip(known_face_encodings, known_faces_names):
+        #     match = face_recognition.compare_faces([face_encoding], live_face_encodings, tolerance = 0.6)
+        #     if match[0]:
+        #         print(f"Found {face_name}!")
+        #         GLOBAL_FACE = "face unlock"
+
+        topic, message = socket.recv_multipart()
+
+        print(f"(GUI)\t{message}")
+
+        if message == "b'stream":
+            reply = image_sender.send_image('Image: ', small_frame)
+        if message == "b'stopVid":
+            video_capture.release()
+            cv2.destroyAllWindows()
+        if message == "b'locked":
+            GLOBAL_KEY = "gui lock"
+        if message == "b'unlocked":
+            GLOBAL_KEY = "gui unlock"
+        if message.startswith(b'add_face'):
+            face_id = message.decode().split(":")[1]
+            face_id.trim()
+            # Wait for the camera to warm up
+            while True:
+                for i in range(10):
+                    video_capture.grab()
+                # Display the resulting image
+                cv2.imshow('Video', small_frame)
+
+                # Wait for a key press
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+            # Release the camera and close the window
+            video_capture.release()
+            cv2.destroyAllWindows()
 
             # Convert the image to RGB format
-            rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+            rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             # Detect faces in the image
-            # live_face_locations = face_recognition.face_locations(rgb_frame)
-            live_face_encodings = face_recognition.face_encodings(rgb_frame)
+            face_locations = face_recognition.face_locations(rgb_image)
 
-            for i, live_face_encoding in enumerate(live_face_encodings):
-                matches = face_recognition.compare_faces(known_face_encodings, live_face_encoding)
-                name = "Unknown"
-                if True in matches:
-                    match_index = matches.index(True)
-                    name = known_faces_names[match_index]
-                    print(f"Found {name}!")
-                    GLOBAL_FACE = "face unlock"
+            # Draw a box around each detected face
+            for top, right, bottom, left in face_locations:
+                cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
 
-            # Compare each detected face to the face encodings in the file
-            # for face_encoding, face_name in zip(known_face_encodings, known_faces_names):
-            #     match = face_recognition.compare_faces([face_encoding], live_face_encodings, tolerance = 0.6)
-            #     if match[0]:
-            #         print(f"Found {face_name}!")
-            #         GLOBAL_FACE = "face unlock"
+            # Save the image as a JPEG file
+            cv2.imwrite(f"./faces/{face_id}.jpg", small_frame)
 
-            topic, message = socket.recv_multipart()
-
-            print(f"(GUI)\t{message}")
-
-            if message == "b'stream":
-                reply = image_sender.send_image('Image: ', small_frame)
-            if message == "b'stopVid":
-                video_capture.release()
-                cv2.destroyAllWindows()
-            if message == "b'locked":
-                GLOBAL_KEY = "gui lock"
-            if message == "b'unlocked":
-                GLOBAL_KEY = "gui unlock"
-            if message.startswith(b'add_face'):
+        if message.startswith(b'del_face'):
+            try:
                 face_id = message.decode().split(":")[1]
-                # Wait for the camera to warm up
-                while True:
-                    for i in range(10):
-                        video_capture.grab()
-                    # Display the resulting image
-                    cv2.imshow('Video', small_frame)
+                face_id.trim()
+                print(f'./faces/{face_id}.jpg')
+                os.remove(f'./faces/{face_id}.jpg')
+            except FileNotFoundError:
+                print(f"File not found")
+            except Exception as e:
+                print(f"{str(e)}")
 
-                    # Wait for a key press
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break
+            # GLOBAL_FACE = f"del: {face_id}"
+        if message.startswith(b'add_finger'):
+            finger_id = message.decode().split(":")[1]
+            GLOBAL_FINGER = f"E{finger_id}\n"
+        if message.startswith(b'del_finger'):
+            finger_id = message.decode().split(":")[1]
+            GLOBAL_FINGER = "D{finger_id}\n"
 
-                # Release the camera and close the window
-                video_capture.release()
-                cv2.destroyAllWindows()
-
-                # Convert the image to RGB format
-                rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-                # Detect faces in the image
-                face_locations = face_recognition.face_locations(rgb_image)
-
-                # Draw a box around each detected face
-                for top, right, bottom, left in face_locations:
-                    cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-
-                # Save the image as a JPEG file
-                cv2.imwrite(f"./faces/{face_id}.jpg", small_frame)
-
-            if message.startswith(b'del_face'):
-                try:
-                    face_id = message.decode().split(":")[1]
-                    os.remove(f'./faces/{face_id}.jpg')
-                except FileNotFoundError:
-                    print(f"File not found")
-                except Exception as e:
-                    print(f"{str(e)}")
-
-                # GLOBAL_FACE = f"del: {face_id}"
-            if message.startswith(b'add_finger'):
-                finger_id = message.decode().split(":")[1]
-                GLOBAL_FINGER = f"E{finger_id}\n"
-            if message.startswith(b'del_finger'):
-                finger_id = message.decode().split(":")[1]
-                GLOBAL_FINGER = "D{finger_id}\n"
-
-        finally:
-            socket.close()
+#        finally:
+#            socket.close()
             #context.term()
             #msg_server.destroy()
             # print("TERMINATED 2")
@@ -520,7 +531,7 @@ def LCD_thread_func():
             lcd_send_command(LCD_SET_ENTRY_MODE)
             lcd_message(typed_code + "      ")
 
-        if GLOBAL_KEY == "keypad unlock" or GLOBAL_KEY == "gui unlock":
+        if GLOBAL_KEY == "keypad unlock": #or GLOBAL_KEY == "gui unlock":
             lcd_send_command(LCD_LINE_2)
             lcd_send_command(LCD_TURN_OFF_CURSOR)
             lcd_send_command(LCD_SET_ENTRY_MODE)
@@ -529,8 +540,11 @@ def LCD_thread_func():
 #            # red LED off
             red.write(0)
             green.write(1)
+#            green.write(0)
             time.sleep(1)
             GLOBAL_KEY == "keypad lock"
+            red.write(1)
+            green.write(0)
 
 
         if GLOBAL_KEY == "keypad wrong":
