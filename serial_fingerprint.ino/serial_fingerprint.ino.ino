@@ -44,32 +44,29 @@ void setup() {
 
 void loop() {
   if (Serial.available()) {
-    char command = Serial.read();
-
-    if (command == 'E' || command == 'e') {
-      // Enroll a new fingerprint
-      //while (!  enrollFingerprint() );
-      enrollFingerprint();
-    } else if (command == 'D' || command == 'd') {
+    String command = Serial.readStringUntil('\n');
+    command.trim();
+    if (command.charAt(0) == 'E') {
+      // Extract the number after the letter
+      uint8_t id = command.substring(1).toInt();
+      enrollFingerprint(id);
+    } else if (command.charAt(0) == 'D') {
       // Delete a fingerprint
-      deleteFingerprint();
-    } else if (command == 'C' || command == 'c') {
+      uint8_t id = command.substring(1).toInt();
+      deleteFingerprint(id);
+    } else if (command.charAt(0) == 'C') {
       // Check a fingerprint
       checkFingerprint();
     }
   }
 }
 
-uint8_t enrollFingerprint() {
-  Serial.println("\nFingerprint Enrollment:");
-  Serial.println("Please type in the ID # (from 1 to 127) you want to save this finger as...");
-  uint8_t id = readnumber();
+uint8_t enrollFingerprint(uint8_t id) {
+  Serial.print("\nFingerprint Enrollment for ID #"); Serial.println(id);
+  Serial.println("Place your finger on the sensor to enroll...");
   if (id == 0) {// ID #0 not allowed, try again!
      return -1;
   }
-
-  Serial.println(id);
-  Serial.println("Place your finger on the sensor to enroll...");
 
   int p = -1;
   Serial.print("Waiting for valid finger to enroll as #"); Serial.println(id);
@@ -222,21 +219,13 @@ uint8_t readnumber(void) {
   return num;
 }
 
-uint8_t deleteFingerprint() {
-  Serial.println("\nFingerprint Deletion:");
-  Serial.println("Please type in the ID # (from 1 to 127) you want to delete...");
-  uint8_t id = readnumber();
-  if (id == 0) {// ID #0 not allowed, try again!
-     return -1;
-  }
-
-  Serial.print("Deleting ID #");
-  Serial.println(id);
+uint8_t deleteFingerprint(uint8_t id) {
   uint8_t p = -1;
+
   p = finger.deleteModel(id);
 
   if (p == FINGERPRINT_OK) {
-    Serial.println("Fingerprint deleted!");
+    Serial.println("Deleted!");
   } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
     Serial.println("Communication error");
   } else if (p == FINGERPRINT_BADLOCATION) {
@@ -246,6 +235,8 @@ uint8_t deleteFingerprint() {
   } else {
     Serial.print("Unknown error: 0x"); Serial.println(p, HEX);
   }
+
+  return p;
 }
 
 uint8_t checkFingerprint() {
