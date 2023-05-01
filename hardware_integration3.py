@@ -36,13 +36,19 @@ video_capture = cv2.VideoCapture(4)
 
 image_sender = imagezmq.ImageSender('tcp://10.144.113.220:5555')
 
-sock_addr = '10.144.113.8'
-sock_port = 5570
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.setblocking(False)
-sock.bind((sock_addr, sock_port))
-sock.listen(1)
-print(f"Listening on {sock_addr}:{sock_port}")
+try:
+    sock_addr = '10.144.113.8'
+    sock_port = 5570
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind((sock_addr, sock_port))
+    sock.listen(1)
+    sock.setblocking(False)
+    print(f"Listening on {sock_addr}:{sock_port}")
+
+    conn, addr = sock.accept()
+    print('Connected by', addr)
+except BlockingIOError:
+    pass
 
 # Saved Door Lock Code
 saved_code = "5678"
@@ -314,8 +320,6 @@ def socket_thread_func():
 
         ##########-------- End face check------#######
 
-        conn, addr = sock.accept()
-        print('Connected by', addr)
         message = conn.recv(1024)
         print(f"(GUI)\t{message}")
 
@@ -460,6 +464,7 @@ if __name__ == '__main__':
 
     finally:
         ser.close()
+        conn.close()
         sock.close()
         image_sender.close()
         video_capture.release()
