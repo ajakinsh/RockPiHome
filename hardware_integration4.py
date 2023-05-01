@@ -48,6 +48,11 @@ context = zmq.Context()
 socket = context.socket(zmq.SUB)
 socket.connect('tcp://10.144.113.8:5557')
 socket.setsockopt(zmq.SUBSCRIBE, b"locked")
+socket.setsockopt(zmq.SUBSCRIBE, b"stream")
+socket.setsockopt(zmq.SUBSCRIBE, b"add_finger")
+socket.setsockopt(zmq.SUBSCRIBE, b"del_finger")
+socket.setsockopt(zmq.SUBSCRIBE, b"add_face")
+socket.setsockopt(zmq.SUBSCRIBE, b"del_face")
 
 # Saved Door Lock Code
 saved_code = "5678"
@@ -296,7 +301,7 @@ def serial_thread_func():
             # Check if message indicates a fingerprint match; update LCD
             if "Found ID #" in ser_data:
                 GLOBAL_SER = "finger unlock"
-                
+
             if "Did not find a match" in ser_data:
                 GLOBAL_SER = "finger wrong"
 
@@ -313,7 +318,7 @@ def serial_thread_func():
 
 
 def signal_handler(signal, frame):
-    msg_server.close()
+    socket.close()
     ser.close()
     print("Caught Ctrl-C. Shutting down")
     exit()
@@ -369,9 +374,7 @@ def socket_thread_func():
 
             topic, message = socket.recv_multipart()
 
-#            message = msg_server.recv()
-#            print(f"(GUI)\t{message}")
-#            msg_server.send(b'OK')
+            print(f"(GUI)\t{message.decode()}")
 
             if message == "b'stream":
                 reply = image_sender.send_image('Image: ', small_frame)
@@ -430,7 +433,7 @@ def socket_thread_func():
                     GLOBAL_FINGER = "D{finger_id}\n"
 
         finally:
-            msg_server.close()
+            socket.close()
             #context.term()
             #msg_server.destroy()
             # print("TERMINATED 2")
@@ -487,13 +490,13 @@ def LCD_thread_func():
             red.write(0)
             green.write(1)
             time.sleep(1)
-            
+
             lcd_send_command(LCD_LINE_2)
             lcd_message("Hello user       ") # change to user's actual name later
             time.sleep(1)
             GLOBAL_SER = "finger lock"
             GLOBAL_FACE = "face lock"
-            
+
         if GLOBAL_SER == "finger wrong":
             lcd_send_command(LCD_RETURN_HOME)
             lcd_send_command(LCD_TURN_OFF_CURSOR)
@@ -527,7 +530,7 @@ def LCD_thread_func():
             red.write(0)
             green.write(1)
             time.sleep(1)
-            GLOBAL_KEY == "keypad lock"     
+            GLOBAL_KEY == "keypad lock"
 
 
         if GLOBAL_KEY == "keypad wrong":
@@ -582,6 +585,7 @@ if __name__ == '__main__':
         lcd_send_command(LCD_LINE_2)
         lcd_message("LOCKED        ")
         ser.close()
+        socket.close()
 #        msg_server.close()
 #        context.term()
         image_sender.close()
@@ -589,4 +593,3 @@ if __name__ == '__main__':
         cv2.destroyAllWindows()
         print("Sockets closed")
         exit()
-
