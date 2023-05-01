@@ -79,12 +79,12 @@ class HomeownerPanel(tk.Frame):
         self.after(1000, self.update_time)
 
     def add_face(self):
-        def add_face_id(face_id, name):
+        def add_face_id(face_id):
             # Code to send face_id and name to the RockPi
-            success_lbl = tk.Label(popup, text=f"Added face ID: {face_id} with name {name} to the database", font=("Helvetica", 12), fg="green")
+            success_lbl = tk.Label(popup, text=f"Added face ID: {face_id} to the database", font=("Helvetica", 12), fg="green")
             success_lbl.pack(pady=5)
-            print(f"Adding face ID: {face_id} with name {name} to the database")
-            data = f"add_face: {face_id}: {name}"
+            print(f"Adding face ID: {face_id} to the database")
+            data = f"add_face: {face_id}"
             msg_client.send(data.encode())
             message = msg_client.recv()
             print(f"(From Base)\t{message}")
@@ -101,22 +101,12 @@ class HomeownerPanel(tk.Frame):
         id_entry = tk.Entry(popup, font=("Helvetica", 12))
         id_entry.pack(pady=10)
 
-        name_label = tk.Label(popup, text="Enter the name for this face:", font=("Helvetica", 12))
-        name_label.pack(pady=5)
-        name_entry = tk.Entry(popup, font=("Helvetica", 12))
-        name_entry.pack(pady=10)
-
         def add_id():
             face_id = id_entry.get()
-            name = name_entry.get()
-            if face_id.isdigit() and name:
-                add_face_id(face_id, name)
-            elif not face_id.isdigit():
-                error_lbl = tk.Label(popup, text="Please enter a numerical ID", font=("Helvetica", 12), fg="red")
-                error_lbl.after(2000, error_lbl.destroy)
-                error_lbl.pack(pady=5)
+            if face_id.isdigit():
+                add_face_id(face_id)
             else:
-                error_lbl = tk.Label(popup, text="Please enter a name", font=("Helvetica", 12), fg="red")
+                error_lbl = tk.Label(popup, text="Please enter a numerical ID", font=("Helvetica", 12), fg="red")
                 error_lbl.after(2000, error_lbl.destroy)
                 error_lbl.pack(pady=5)
 

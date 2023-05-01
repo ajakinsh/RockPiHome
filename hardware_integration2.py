@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import serial
 import threading
 import signal
+import os
 
 GLOBAL_SER = "finger lock"
 GLOBAL_KEY = "keypad lock"
@@ -283,94 +284,157 @@ def serial_thread_func():
             if datetime.now() - last_command_time >= timedelta(seconds=1):  # send command every second
                 ser.write("C\n".encode())
                 last_command_time = datetime.now()
-                
+
         else:
             ser.write(GLOBAL_FINGER.encode())
             GLOBAL_FINGER = "check"
-           
-            
+
+
 def signal_handler(signal, frame):
     msg_server.close()
     ser.close()
     print("Caught Ctrl-C. Shutting down")
     exit()
-    
+
 def socket_thread_func():
     global GLOBAL_FACE
     global GLOBAL_KEY
-    
+
 #    context = zmq.Context()
 #    msg_server = context.socket(zmq.REP)
 #    msg_server.setsockopt(zmq.LINGER, 0)
 #    msg_server.bind('tcp://*:5557')
-        
-    # Load the reference image
-    reference_image = face_recognition.load_image_file("jess.jpg")
-    reference_encoding = face_recognition.face_encodings(reference_image)[0]
-    
+
+    # # Load the reference image
+    # reference_image = face_recognition.load_image_file("jess.jpg")
+    # reference_encoding = face_recognition.face_encodings(reference_image)[0]
+
+    # Load known faces from file (assuming it's in the format "name,id,encoding")
+    with open("known_faces.txt") as f:
+        for line in f:
+            name, id, encoding_str = line.strip().split(",")
+            encoding = [float(e) for e in encoding_str[1:-1].split(",")]
+            face_encodings[id] = encoding
+
+
+    # Open the file for reading and writing
+    with open("face_encodings.txt", "a+") as file:
+
+        # Add new face encodings to the file
+        def add_face_encoding(name, face_encoding):
+            file.write(f"{name}: {face_encoding}\n")
+
+        # Read the file to get the face encodings and names
+        def read_face_encodings():
+            face_encodings = {}
+            file.seek(0)
+            for line in file:
+                name, encoding = line.strip().split(": ")
+                face_encodings[name] = [float(e) for e in encoding[1:-1].split(",")]
+            return face_encodings
+
+        # Load the reference image and get the face encoding
+        reference_image = face_recognition.load_image_file("jessica.jpg")
+        reference_encoding = face_recognition.face_encodings(reference_image)[0]
+
+        # Add the reference encoding to the file
+        add_face_encoding("Jessica", reference_encoding)
+
+        # Get the face encodings and names from the file
+        face_encodings = read_face_encodings()
+
+    # Detect faces in the image
+    unknown_image = face_recognition.load_image_file("unknown.jpg")
+    face_locations = face_recognition.face_locations(unknown_image)
+    face_encodings = face_recognition.face_encodings(unknown_image, face_locations)
+
+    # Compare each detected face to the face encodings in the file
+    for face_encoding in face_encodings:
+        for name, encoding in face_encodings.items():
+            match = face_recognition.compare_faces([encoding], face_encoding, tolerance = 0.6)
+            if match[0]:
+                print(f"Found {name}!")
+                GLOBAL_FACE = "face unlock"
+
+    # Add a new face encoding to the file
+    new_face_image = face_recognition.load_image_file("new_face.jpg")
+    new_face_encoding = face_recognition.face_encodings(new_face_image)[0]
+    add_face_encoding("New Face", new_face_encoding)
+
+
     try:
+        # Capture a frame from the camera
+        ret, frame = video_capture.read()
+        small_frame = cv2.resize(frame, (384, 216)) # make image smaller if huge
 
-        while True:
-            print("TERMINATED")
+        message = msg_server.recv()
+        print(f"(GUI)\t{message}")
+        msg_server.send(b'OK')
 
-            ####------ Check face -----#######
-            for i in range(10):
-                video_capture.grab()
+        if message == "b'stream":
+            reply = image_sender.send_image('Image: ', small_frame)
+        if message == "b'stopVid":
+            video_capture.release()
+            cv2.destroyAllWindows()
+        if message == "b'locked":
+            GLOBAL_KEY = "gui lock"
+        if message == "b'unlocked":
+            GLOBAL_KEY = "gui unlock"
+        if message.startswith(b'add_face'):
+            face_id = message.decode().split(":")[1]
+            # Wait for the camera to warm up
+            while True:
+                for i in range(10):
+                    video_capture.grab()
+                # Display the resulting image
+                cv2.imshow('Video', small_frame)
 
-            ret, frame = video_capture.read()
-            small_frame = cv2.resize(frame, (384, 216)) # make image smaller if huge
+                # Wait for a key press
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+            # Release the camera and close the window
+            video_capture.release()
+            cv2.destroyAllWindows()
 
             # Convert the image to RGB format
-            rgb_image = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+            rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             # Detect faces in the image
             face_locations = face_recognition.face_locations(rgb_image)
-            face_encodings = face_recognition.face_encodings(rgb_image, face_locations)
 
-            # Compare each detected face to the reference image
-            for face_encoding in face_encodings:
-                match = face_recognition.compare_faces([reference_encoding], face_encoding, tolerance = 0.6)
-                if match[0]:
-                    print("Found Jess!")
-                    GLOBAL_FACE = "face unlock"
+            # Draw a box around each detected face
+            for top, right, bottom, left in face_locations:
+                cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
 
-            ##########-------- End face check------#######
+            # Save the image as a JPEG file
+            cv2.imwrite(f"./faces/{face_id}.jpg", small_frame)
 
-            message = msg_server.recv()
-            print(f"(GUI)\t{message}")
-            msg_server.send(b'OK')
-
-            if message == "b'stream":
-                reply = image_sender.send_image('Image: ', small_frame)
-            if message == "b'stopVid":
-                video_capture.release()
-                cv2.destroyAllWindows()
-            if message == "b'locked":
-                GLOBAL_KEY = "gui lock"
-            if message == "b'unlocked":
-                GLOBAL_KEY = "gui unlock"
-            if message.startswith(b'add_face'):
-                face_id = message.decode().split(":")[1]
-                name = message.decode().split(":")[2]
-#                GLOBAL_KEY = "gui lock"
             if message.startswith(b'del_face'):
-                face_id = message.decode().split(":")[1]
-#                GLOBAL_KEY = "gui lock"
+                try:
+                    face_id = message.decode().split(":")[1]
+                    os.remove(f'./faces/{face_id}.jpg')
+                except FileNotFoundError:
+                    print(f"File not found")
+                except Exception as e:
+                    print(f"{str(e)}")
+
+                # GLOBAL_FACE = f"del: {face_id}"
             if message.startswith(b'add_finger'):
                 finger_id = message.decode().split(":")[1]
                 GLOBAL_FINGER = f"E{finger_id}\n"
             if message.startswith(b'del_finger'):
                 finger_id = message.decode().split(":")[1]
                 GLOBAL_FINGER = "D{finger_id}\n"
-                
+
     finally:
-        
+
         msg_server.close()
         #context.term()
         #msg_server.destroy()
         print("TERMINATED 2")
 
-    
+
 def keypad_thread_func():
     global GLOBAL_KEY
     global typed_code
@@ -472,7 +536,7 @@ if __name__ == '__main__':
 
     try:
         signal.signal(signal.SIGINT, signal_handler)
-        
+
         serial_thread = threading.Thread(target=serial_thread_func)
         serial_thread.daemon = True
         serial_thread.start()
