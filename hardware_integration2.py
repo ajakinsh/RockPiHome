@@ -482,7 +482,7 @@ def LCD_thread_func():
             lcd_send_command(LCD_SET_ENTRY_MODE)
             lcd_message(typed_code + "      ")
 
-        if GLOBAL_KEY == "keypad unlock" or GLOBAL_KEY == "gui lock":
+        if GLOBAL_KEY == "keypad unlock" or GLOBAL_KEY == "gui unlock":
             lcd_send_command(LCD_LINE_2)
             lcd_send_command(LCD_TURN_OFF_CURSOR)
             lcd_send_command(LCD_SET_ENTRY_MODE)
