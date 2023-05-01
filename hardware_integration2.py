@@ -7,10 +7,12 @@ import face_recognition
 from datetime import datetime, timedelta
 import serial
 import threading
+import signal
 
 GLOBAL_SER = "finger lock"
 GLOBAL_KEY = "keypad lock"
 GLOBAL_FACE = "face lock"
+GLOBAL_FINGER = "check"
 
 # set initial time
 last_command_time = datetime.now()
@@ -34,11 +36,12 @@ except:
 
 video_capture = cv2.VideoCapture(4)
 
-image_sender = imagezmq.ImageSender('tcp://10.144.113.220:5555')
+image_sender = imagezmq.ImageSender('tcp://10.144.113.8:5556')
 
 context = zmq.Context()
 msg_server = context.socket(zmq.REP)
-msg_server.bind('tcp://*:5570')
+msg_server.setsockopt(zmq.LINGER, 0)
+msg_server.bind('tcp://*:5556')
 
 # Saved Door Lock Code
 saved_code = "5678"
@@ -263,6 +266,7 @@ def read_keypad():
 
 def serial_thread_func():
     global last_command_time
+    global GLOBAL_FINGER
     while True:
         if ser.in_waiting > 0:
             # read from serial port
@@ -274,56 +278,99 @@ def serial_thread_func():
                 global GLOBAL_SER
                 GLOBAL_SER = "finger unlock"
 
-        # check if it's time to send the command
-        if datetime.now() - last_command_time >= timedelta(seconds=1):  # send command every second
-            ser.write("C\n".encode())
-            last_command_time = datetime.now()
-
+        if GLOBAL_FINGER == "check":
+            # check if it's time to send the command
+            if datetime.now() - last_command_time >= timedelta(seconds=1):  # send command every second
+                ser.write("C\n".encode())
+                last_command_time = datetime.now()
+                
+        else:
+            ser.write(GLOBAL_FINGER.encode())
+            GLOBAL_FINGER = "check"
+           
+            
+def signal_handler(signal, frame):
+    msg_server.close()
+    ser.close()
+    print("Caught Ctrl-C. Shutting down")
+    exit()
+    
 def socket_thread_func():
     global GLOBAL_FACE
     global GLOBAL_KEY
+    
+#    context = zmq.Context()
+#    msg_server = context.socket(zmq.REP)
+#    msg_server.setsockopt(zmq.LINGER, 0)
+#    msg_server.bind('tcp://*:5557')
+        
     # Load the reference image
     reference_image = face_recognition.load_image_file("jess.jpg")
     reference_encoding = face_recognition.face_encodings(reference_image)[0]
+    
+    try:
 
-    while True:
-        ####------ Check face -----#######
-        for i in range(10):
-            video_capture.grab()
+        while True:
+            print("TERMINATED")
 
-        ret, frame = video_capture.read()
-        small_frame = cv2.resize(frame, (384, 216)) # make image smaller if huge
+            ####------ Check face -----#######
+            for i in range(10):
+                video_capture.grab()
 
-        # Convert the image to RGB format
-        rgb_image = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+            ret, frame = video_capture.read()
+            small_frame = cv2.resize(frame, (384, 216)) # make image smaller if huge
 
-        # Detect faces in the image
-        face_locations = face_recognition.face_locations(rgb_image)
-        face_encodings = face_recognition.face_encodings(rgb_image, face_locations)
+            # Convert the image to RGB format
+            rgb_image = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
 
-        # Compare each detected face to the reference image
-        for face_encoding in face_encodings:
-            match = face_recognition.compare_faces([reference_encoding], face_encoding, tolerance = 0.6)
-            if match[0]:
-                print("Found Jess!")
-                GLOBAL_FACE = "face unlock"
+            # Detect faces in the image
+            face_locations = face_recognition.face_locations(rgb_image)
+            face_encodings = face_recognition.face_encodings(rgb_image, face_locations)
 
-        ##########-------- End face check------#######
+            # Compare each detected face to the reference image
+            for face_encoding in face_encodings:
+                match = face_recognition.compare_faces([reference_encoding], face_encoding, tolerance = 0.6)
+                if match[0]:
+                    print("Found Jess!")
+                    GLOBAL_FACE = "face unlock"
 
-        message = msg_server.recv()
-        print(f"(GUI)\t{message}")
-        msg_server.send(b'OK')
+            ##########-------- End face check------#######
 
-        if message == "b'stream":
-            reply = image_sender.send_image('Image: ', small_frame)
-        if message == "b'stopVid":
-            video_capture.release()
-            cv2.destroyAllWindows()
-        if message == "b'locked":
-            GLOBAL_KEY = "gui lock"
-        if message == "b'unlocked":
-            GLOBAL_KEY = "gui unlock"
+            message = msg_server.recv()
+            print(f"(GUI)\t{message}")
+            msg_server.send(b'OK')
 
+            if message == "b'stream":
+                reply = image_sender.send_image('Image: ', small_frame)
+            if message == "b'stopVid":
+                video_capture.release()
+                cv2.destroyAllWindows()
+            if message == "b'locked":
+                GLOBAL_KEY = "gui lock"
+            if message == "b'unlocked":
+                GLOBAL_KEY = "gui unlock"
+            if message.startswith(b'add_face'):
+                face_id = message.decode().split(":")[1]
+                name = message.decode().split(":")[2]
+#                GLOBAL_KEY = "gui lock"
+            if message.startswith(b'del_face'):
+                face_id = message.decode().split(":")[1]
+#                GLOBAL_KEY = "gui lock"
+            if message.startswith(b'add_finger'):
+                finger_id = message.decode().split(":")[1]
+                GLOBAL_FINGER = f"E{finger_id}\n"
+            if message.startswith(b'del_finger'):
+                finger_id = message.decode().split(":")[1]
+                GLOBAL_FINGER = "D{finger_id}\n"
+                
+    finally:
+        
+        msg_server.close()
+        #context.term()
+        #msg_server.destroy()
+        print("TERMINATED 2")
+
+    
 def keypad_thread_func():
     global GLOBAL_KEY
     global typed_code
@@ -424,6 +471,8 @@ if __name__ == '__main__':
     time.sleep(1)
 
     try:
+        signal.signal(signal.SIGINT, signal_handler)
+        
         serial_thread = threading.Thread(target=serial_thread_func)
         serial_thread.daemon = True
         serial_thread.start()
@@ -450,7 +499,8 @@ if __name__ == '__main__':
 
     finally:
         ser.close()
-        msg_server.close()
+#        msg_server.close()
+#        context.term()
         image_sender.close()
         video_capture.release()
         cv2.destroyAllWindows()
