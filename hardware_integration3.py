@@ -39,6 +39,7 @@ image_sender = imagezmq.ImageSender('tcp://10.144.113.220:5555')
 sock_addr = '10.144.113.8'
 sock_port = 5570
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.setblocking(False)
 sock.bind((sock_addr, sock_port))
 sock.listen(1)
 print(f"Listening on {sock_addr}:{sock_port}")
