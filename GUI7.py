@@ -12,7 +12,7 @@ image_receiver = imagezmq.ImageHub()
 
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
-socket.bind("tcp://*:5557")
+socket.bind("tcp://*:5558")
 
 stream = True
 
@@ -241,6 +241,7 @@ class HomeownerPanel(tk.Frame):
         self.locked = not self.locked
         lock_state = "locked" if self.locked else "unlocked"
         self.lock_unlock_button.config(text="PRESS TO UNLOCK" if self.locked else "PRESS TO LOCK")
+        status_label.config(text=f'System Status: {lock_state}')
         # Send lock state to the server
         lock_state_msg = "locked" if self.locked else "unlocked"
         socket.send_multipart([b"locked", lock_state_msg.encode()])
