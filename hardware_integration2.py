@@ -37,7 +37,7 @@ except:
 
 video_capture = cv2.VideoCapture(4)
 
-image_sender = imagezmq.ImageSender('tcp://10.144.113.8:5556')
+image_sender = imagezmq.ImageSender('tcp://10.144.113.8:5555')
 
 context = zmq.Context()
 msg_server = context.socket(zmq.REP)
